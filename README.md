@@ -141,6 +141,36 @@ python -m trip_agent.tracker                # the daily run
 
 Setup: turn on Google 2-Step Verification, create an app password at <https://myaccount.google.com/apppasswords>, and put `GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD` in `.env`. The tracker searches at most once per trip per day (a second run that day reuses the saved reading), so two trips use about 60 of SerpApi's 250 free monthly searches. The thresholds are constants at the top of `tracker.py`.
 
+## Findings
+
+Full suite (15 scenarios) run on three Claude models against the same cached flight data, so every model saw identical fares. **[Interactive report →](docs/eval_report.html)** (per-run timelines, every tool call, and each check's verdict).
+
+| | Opus 5 | Sonnet 5 | Haiku 4.5 |
+|---|---|---|---|
+| Passed every check | 14/15 | **15/15** | 11/15 |
+| Avg run time | 16.4 s | 14.7 s | 15.8 s |
+| Avg cost per run | $0.095 | $0.039 | $0.020 |
+
+**1. Haiku's failures were protocol failures, not bad answers.** In `return_before_departure`, `vague_dates`, and `empty_results`, Haiku wrote a sensible reply in prose but never called `submit_answer`, so there was no structured result for anything downstream to use. An eval that only read the final message would have passed all three. Only a trajectory eval catches this.
+
+**2. Opus's one failure is a known false alarm, kept on purpose.** In `impossible_budget` it said about **$290** would cover the cheapest nonstop; the real fare was $289. The grounding check flags any dollar amount it can't trace to the data. I kept it strict: a check that forgives "close enough" numbers would also forgive made-up ones.
+
+**3. The eval was wrong before the agent was.** The first live run of `honeymoon` failed for three reasons, and all three were bugs in the eval:
+- the airport list was missing Seoul Gimpo (GMP);
+- the reference search penalized the agent for flights on routes it *had* searched, where Google had simply returned different itineraries for a different query;
+- the tool-call limit was too tight for a legitimate search-by-region strategy.
+
+All three were fixed before any results were trusted. Earlier, a planted-failure test showed the answer key couldn't penalize an agent for skipping an airport, which is why the reference search exists. *Evaluate the evaluator before you evaluate the agent.*
+
+**4. The eval surfaced what to optimize next.**
+- Parallel flight searches cut the search phase of a live `honeymoon` run from 24.4 s to 9.3 s, and the whole run from 61.7 s to 45.8 s.
+- About 90% of wall time is model turns, and 91–92% of tokens are input: the conversation is re-sent every turn. Prompt caching is the obvious next step.
+- Token counts differ only about 6% between models, so the cost gap comes almost entirely from price per token.
+
+**5. The real trips.** All three models agreed on both picks: a $653 nonstop to Mexico City for the bachelorette trip, and a $1,525 nonstop Houston→Tokyo for the honeymoon.
+
+**Caveat:** this is one run per model per scenario. "Sonnet wins" needs repeated runs with variance before it's a real conclusion.
+
 ## Eval concepts demonstrated
 
 - **Trajectory vs. outcome eval:** `tool_use`, `safety`, and `efficiency` score *how* the agent got there; `outcome` and `accuracy` score *what it ended up with*. A run can pick an eligible flight (outcome passes) while breaking the ranking rule or misquoting a time (accuracy and grounding fail).
