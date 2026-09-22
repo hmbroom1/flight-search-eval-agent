@@ -1,0 +1,19 @@
+# Secrets: never commit. If a key is ever committed, ROTATE it; deleting it
+# in a later commit does not remove it from git history.
+.env
+.env.*
+!.env.example
+
+# Local environments / caches
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Recorded live API responses and eval run outputs (may contain trip details;
+# opt in deliberately if you want to publish a snapshot)
+data/cache/
+data/price_history.jsonl
+runs/
+

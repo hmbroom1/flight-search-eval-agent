@@ -1,0 +1,16 @@
+[project]
+name = "trip-agent"
+version = "0.1.0"
+description = "Trip planning agent built to demonstrate agent evaluation and observability"
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

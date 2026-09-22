@@ -1,0 +1,767 @@
+<title>Trip Agent Evals</title>
+<meta name="description" content="Opus 5, Sonnet 5 and Haiku 4.5 on the same flight-search agent: real trips, stress tests, time and tokens.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+  /* Dark-first. The light theme redefines the same tokens. */
+  :root {
+    --bg: #0A0B0D; --surface: #111316; --surface-2: #171A1E; --surface-3: #1E2227;
+    --line: #23272D; --line-2: #2E333A;
+    --ink: #EDEEF0; --ink-2: #A3A7AE; --ink-3: #6E737B;
+    --accent: #8AB4FF;
+    --pass: #3DD68C; --fail: #FF6B6B; --hold: #F2B84B;
+    --pass-bg: rgba(61, 214, 140, .12); --fail-bg: rgba(255, 107, 107, .12); --hold-bg: rgba(242, 184, 75, .12);
+    --m0: #3987e5; --m1: #d95926; --m2: #199e70;
+    --backdrop: rgba(0, 0, 0, .66); --nav-bg: rgba(10, 11, 13, .72);
+    --sans: "Geist", "Segoe UI", system-ui, sans-serif;
+    --mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #F3F4F6; --surface: #FFFFFF; --surface-2: #F1F2F4; --surface-3: #E7E9EC;
+      --line: #D9DCE1; --line-2: #C4C8CF;
+      --ink: #0A0B0D; --ink-2: #4A4E56; --ink-3: #6B7079;
+      --accent: #1F4FC4;
+      --pass: #13733A; --fail: #C7291D; --hold: #95600B;
+      --pass-bg: rgba(19, 115, 58, .14); --fail-bg: rgba(199, 41, 29, .12); --hold-bg: rgba(149, 96, 11, .15);
+      --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a;
+      --backdrop: rgba(10, 11, 13, .4); --nav-bg: rgba(243, 244, 246, .8);
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F3F4F6; --surface: #FFFFFF; --surface-2: #F1F2F4; --surface-3: #E7E9EC;
+    --line: #D9DCE1; --line-2: #C4C8CF;
+    --ink: #0A0B0D; --ink-2: #4A4E56; --ink-3: #6B7079;
+    --accent: #1F4FC4;
+    --pass: #13733A; --fail: #C7291D; --hold: #95600B;
+    --pass-bg: rgba(19, 115, 58, .14); --fail-bg: rgba(199, 41, 29, .12); --hold-bg: rgba(149, 96, 11, .15);
+    --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a;
+    --backdrop: rgba(10, 11, 13, .4); --nav-bg: rgba(243, 244, 246, .8);
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  .card { box-shadow: 0 1px 2px rgba(0, 0, 0, .04); }
+  body { background: var(--bg); color: var(--ink); font: 14.5px/1.55 var(--sans); padding-inline: 16px; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding-block: 28px 72px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 64px; }
+  .wrap > * { min-width: 0; }
+  h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -.02em; text-wrap: balance; }
+  h1 { font-size: clamp(32px, 4.6vw, 48px); line-height: 1.05; letter-spacing: -.035em; }
+  h2 { font-size: 22px; line-height: 1.2; }
+  h3 { font-size: 15.5px; }
+  p { margin: 0; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  .mono { font-family: var(--mono); }
+  .num { font-variant-numeric: tabular-nums; }
+  .muted { color: var(--ink-2); }
+  .faint { color: var(--ink-3); }
+  .small { font-size: 13px; }
+  .label { font: 500 11.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+  .sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 10px 20px; margin-bottom: 18px; }
+  .sec-head > div { display: grid; gap: 6px; max-width: 64ch; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+  .mdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .btn { border: 1px solid var(--line-2); background: var(--surface-2); border-radius: 8px; padding: 6px 11px; cursor: pointer; font-size: 13px; font-weight: 500; }
+  .btn:hover { border-color: var(--ink-3); }
+  .link { color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; font-weight: 500; text-align: left; }
+
+  nav.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; margin-inline: -16px; padding: 12px 16px;
+    background: var(--nav-bg); backdrop-filter: saturate(160%) blur(12px); -webkit-backdrop-filter: saturate(160%) blur(12px); border-bottom: 1px solid var(--line); }
+  nav.top .in { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .brand { font-weight: 600; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; }
+  .brand .logo { width: 22px; height: 22px; border-radius: 6px; background: var(--ink); color: var(--bg); display: grid; place-items: center; font-size: 12px; }
+  .navlinks { display: flex; gap: 2px; flex-wrap: wrap; }
+  .navlinks a { color: var(--ink-2); text-decoration: none; font-size: 13px; padding: 5px 9px; border-radius: 7px; }
+  .navlinks a:hover { background: var(--surface-2); color: var(--ink); }
+
+  .hero { display: grid; gap: 20px; padding-top: 12px; }
+  .hero p.lede { font-size: 16px; color: var(--ink-2); max-width: 72ch; }
+  .about { margin: 0; padding-left: 18px; display: grid; gap: 6px; max-width: 76ch; color: var(--ink-2); font-size: 14.5px; }
+  .about b { color: var(--ink); font-weight: 600; }
+  .about li::marker { color: var(--ink-3); }
+  .verdict { font-size: 15px; max-width: 72ch; padding-left: 12px; border-left: 2px solid var(--ink); }
+  .mstrip { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+  .mcard { padding: 16px 18px; display: grid; gap: 14px; border-top: 2px solid var(--mc); }
+  .mcard .hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .mcard .nm { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+  .mcard .px { font: 500 11.5px/1 var(--mono); color: var(--ink-3); }
+  .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .kpi { display: grid; gap: 3px; }
+  .kpi b { font: 600 20px/1.1 var(--sans); letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .kpi span { font-size: 12px; color: var(--ink-3); }
+  .kpi .best { font: 600 9.5px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--pass); }
+
+  .trips { display: grid; gap: 16px; }
+  .trip { padding: 22px; display: grid; gap: 18px; }
+  .trip-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; align-items: start; }
+  .trip-head .t { display: grid; gap: 6px; }
+  .route { font: 600 24px/1.15 var(--mono); letter-spacing: -.02em; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .route .arrow { color: var(--ink-3); font-weight: 400; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fact { font-size: 12.5px; padding: 4px 9px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-2); }
+  .fact.key { color: var(--ink); }
+  .agree { font-size: 13.5px; padding: 10px 12px; border-radius: 10px; background: var(--pass-bg); color: var(--ink); }
+  .agree.diff { background: var(--hold-bg); }
+  .picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+  .pick { border: 1px solid var(--line); border-top: 2px solid var(--mc); border-radius: 12px; padding: 14px; display: grid; gap: 10px; background: var(--surface-2); text-align: left; cursor: pointer; align-content: start; }
+  .pick:hover { border-color: var(--line-2); border-top-color: var(--mc); background: var(--surface-3); }
+  .pick .who { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+  .pick .who > span:first-child { display: flex; align-items: center; gap: 7px; }
+  .flight { display: grid; gap: 2px; }
+  .flight .fn { font: 500 14px/1.3 var(--mono); }
+  .flight .sub { font-size: 12.5px; color: var(--ink-2); }
+  .flight .price { font: 600 24px/1.1 var(--sans); letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .pick .foot { display: flex; flex-wrap: wrap; gap: 4px 12px; font: 500 12px/1.3 var(--mono); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .status { font: 600 11.5px/1 var(--sans); padding: 4px 8px; border-radius: 999px; background: var(--pass-bg); color: var(--pass); white-space: nowrap; }
+  .status.fail { background: var(--fail-bg); color: var(--fail); }
+  .open-hint { font-size: 12px; color: var(--accent); }
+  .trip-cmp { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
+
+  .bars { display: grid; gap: 8px; align-content: start; }
+  .bar { display: grid; grid-template-columns: 92px minmax(0, 1fr) 64px; gap: 10px; align-items: center; font-size: 12.5px; }
+  .bar .lbl { display: flex; align-items: center; gap: 7px; color: var(--ink-2); white-space: nowrap; overflow: hidden; }
+  .bar .val { font: 500 12px/1 var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+  .track { display: flex; gap: 2px; height: 12px; }
+  .seg { height: 100%; min-width: 2px; }
+  .seg:first-child { border-radius: 4px 0 0 4px; } .seg:last-child { border-radius: 0 4px 4px 0; } .seg:only-child { border-radius: 4px; }
+  .chart { padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+  .chart .sub { font-size: 12.5px; color: var(--ink-3); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--ink-2); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .charts3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+  .insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 12px; }
+  .insight { padding: 16px 18px; display: grid; gap: 6px; align-content: start; }
+  .insight b { font: 600 26px/1.1 var(--sans); letter-spacing: -.03em; }
+  .insight p { font-size: 13.5px; color: var(--ink-2); }
+  .ba { padding: 18px; display: grid; gap: 14px; margin-top: 12px; }
+  .delta { font: 600 13px/1.3 var(--sans); color: var(--pass); }
+
+  .grid-wrap { overflow-x: auto; }
+  table.st { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .st th, .st td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .st thead th { font: 500 12px/1.2 var(--sans); color: var(--ink-2); white-space: nowrap; }
+  .st thead th.m, .st td.m { text-align: center; }
+  .st tr.group td { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); padding-top: 20px; padding-bottom: 8px; }
+  .st .nm { font-weight: 500; }
+  .st .ds { font-size: 12.5px; color: var(--ink-3); max-width: 52ch; }
+  .cell { display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; background: none; cursor: pointer; padding: 5px 8px; border-radius: 8px; font: 500 12px/1 var(--sans); }
+  .cell:hover { border-color: var(--line-2); background: var(--surface-2); }
+  .cell .ic { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; background: var(--pass-bg); color: var(--pass); }
+  .cell.fail .ic { background: var(--fail-bg); color: var(--fail); }
+  .cell .why { color: var(--fail); max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .st tfoot td { font: 500 12.5px/1.2 var(--mono); color: var(--ink); border-bottom: 0; background: var(--surface-2); }
+  .st tfoot td:first-child { border-radius: 0 0 0 14px; } .st tfoot td:last-child { border-radius: 0 0 14px 0; }
+
+  .findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .finding { padding: 18px; display: grid; gap: 8px; align-content: start; }
+  .finding .k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+  .finding.info .k { color: var(--accent); } .finding.warn .k { color: var(--hold); } .finding.bad .k { color: var(--fail); }
+  .finding p, .finding li { font-size: 13.5px; color: var(--ink-2); }
+  .finding ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+  details.x > summary { cursor: pointer; font-size: 13px; color: var(--accent); font-weight: 500; list-style: none; }
+  details.x > summary::-webkit-details-marker { display: none; }
+  details.x > summary::after { content: " →"; }
+  details.x[open] > summary::after { content: " ↓"; }
+  details.x[open] > summary { margin-bottom: 8px; }
+  details.panel { margin-top: 12px; }
+  details.panel > summary { cursor: pointer; list-style: none; padding: 14px 18px; font-weight: 500; display: flex; justify-content: space-between; gap: 12px; }
+  details.panel > summary::-webkit-details-marker { display: none; }
+  details.panel > summary::after { content: "Show"; color: var(--accent); font-size: 13px; }
+  details.panel[open] > summary::after { content: "Hide"; }
+  details.panel > .body { padding: 0 18px 18px; display: grid; gap: 14px; min-width: 0; }
+  .pipeline { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+  .pstep { padding: 12px; border-radius: 10px; background: var(--surface-2); display: grid; gap: 6px; align-content: start; }
+  .pstep .n { font: 500 11px/1 var(--mono); color: var(--ink-3); }
+  .pstep h4 { font-size: 13.5px; }
+  .pstep p { font-size: 12.5px; color: var(--ink-2); }
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag { font: 500 10.5px/1 var(--mono); padding: 4px 6px; border-radius: 5px; background: var(--surface-3); color: var(--ink-2); }
+  @media (max-width: 880px) { .pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+  footer { font-size: 12.5px; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 18px; }
+  footer code { font-family: var(--mono); }
+
+  dialog#detail { border: 1px solid var(--line-2); padding: 0; width: min(1160px, calc(100vw - 24px)); height: calc(100vh - 24px); max-height: calc(100vh - 24px);
+    border-radius: 16px; background: var(--bg); color: var(--ink); box-shadow: 0 30px 80px rgba(0, 0, 0, .45); }
+  dialog#detail::backdrop { background: var(--backdrop); backdrop-filter: blur(3px); }
+  .dlg { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; }
+  .dlg-head { display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--surface); }
+  .dlg-head .ttl { display: grid; gap: 3px; min-width: 0; }
+  .dlg-head h2 { font-size: 20px; }
+  .dlg-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .seg-ctl { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); }
+  .seg-ctl button { border: 0; background: none; padding: 5px 10px; border-radius: 7px; cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+  .seg-ctl button[aria-pressed="true"] { background: var(--surface-3); color: var(--ink); }
+  .dlg-body { overflow-y: auto; padding: 18px; display: grid; gap: 14px; align-content: start; }
+  .dlg-body > * { min-width: 0; }
+  .stages { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.15fr) minmax(0, 1fr); }
+  .stage { padding: 14px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .stage + .stage { border-left: 1px solid var(--line); }
+  .stage-k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+  @media (max-width: 1000px) {
+    .stages { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .stage + .stage { border-left: 0; } .stage { border-top: 1px solid var(--line); } .stage:first-child, .stage:nth-child(2) { border-top: 0; }
+    .stage:nth-child(2), .stage:nth-child(4) { border-left: 1px solid var(--line); }
+  }
+  @media (max-width: 620px) { .stages { grid-template-columns: minmax(0, 1fr); } .stage:nth-child(n) { border-left: 0; border-top: 1px solid var(--line); } .stage:first-child { border-top: 0; } }
+  .quote { font-size: 13px; color: var(--ink-2); border-left: 2px solid var(--line-2); padding-left: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { font: 500 12px/1.2 var(--sans); padding: 4px 8px; border-radius: 6px; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
+  button.chip { cursor: pointer; } button.chip:hover { border-color: var(--line-2); }
+  .chip.pass { background: var(--pass-bg); color: var(--pass); border-color: transparent; } .chip.fail { background: var(--fail-bg); color: var(--fail); border-color: transparent; }
+  .chip.hold { background: var(--hold-bg); color: var(--hold); border-color: transparent; } .chip.accent { color: var(--accent); }
+  .sline { font: 400 12.5px/1.4 var(--mono); display: grid; gap: 2px; padding: 7px 9px; border-radius: 8px; background: var(--surface-2); }
+  .sline.err { background: var(--fail-bg); color: var(--fail); }
+  .sline small { font-family: var(--sans); color: var(--ink-3); } .sline.err small { color: var(--fail); }
+  .big { font: 600 26px/1 var(--sans); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .funnel { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: baseline; }
+  .funnel span { font-size: 12.5px; color: var(--ink-2); }
+  .strips { display: grid; gap: 6px; }
+  .strip { display: grid; grid-template-columns: 3px 1fr auto; gap: 0 10px; align-items: center; text-align: left; width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); padding: 6px 10px 6px 0; cursor: pointer; }
+  .strip:hover { border-color: var(--line-2); }
+  .strip .band { align-self: stretch; border-radius: 8px 0 0 8px; background: var(--ink-3); }
+  .strip.passed .band { background: var(--pass); } .strip.filtered .band { background: var(--hold); }
+  .strip.pick { border-color: var(--accent); }
+  .strip .fl { font: 500 12px/1.3 var(--mono); } .strip .rt { font-size: 11.5px; color: var(--ink-3); }
+  .strip .pr { font: 600 13px/1 var(--mono); font-variant-numeric: tabular-nums; }
+  .more-link { font-size: 12.5px; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+  .evalgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .evalgrid button { display: flex; justify-content: space-between; gap: 6px; border: 0; border-radius: 7px; padding: 6px 8px; font: 500 12px/1.2 var(--sans); cursor: pointer; text-align: left; }
+  .evalgrid .pass { background: var(--pass-bg); color: var(--pass); } .evalgrid .fail { background: var(--fail-bg); color: var(--fail); } .evalgrid .na { background: var(--surface-2); color: var(--ink-3); }
+  .panel2 { padding: 14px 16px; display: grid; gap: 12px; min-width: 0; }
+  .panel2 .hd { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; align-items: baseline; }
+  .diagram { display: flex; align-items: center; overflow-x: auto; padding-bottom: 6px; }
+  .dcol { display: grid; gap: 8px; align-content: center; flex: 0 0 auto; }
+  .darrow { flex: 0 0 26px; height: 1px; background: var(--line-2); position: relative; margin: 0 4px; }
+  .darrow::after { content: ""; position: absolute; right: -1px; top: -4px; border: 4.5px solid transparent; border-left: 6px solid var(--line-2); border-right: 0; }
+  .node { width: 176px; border: 1px solid var(--line); border-top: 2px solid var(--ink-3); border-radius: 10px; padding: 9px 10px; display: grid; gap: 3px; background: var(--surface-2); }
+  .node.llm { border-top-color: var(--mc); } .node.tool { border-top-color: var(--ink-2); }
+  .node.start, .node.end { width: 140px; } .node.err { border-color: var(--fail); }
+  .node .t { font: 600 12.5px/1.25 var(--sans); } .node .m { font: 500 11.5px/1.35 var(--mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .node .r { font-size: 11.5px; color: var(--ink-3); line-height: 1.35; }
+  .badge { font: 600 10px/1 var(--mono); letter-spacing: .03em; text-transform: uppercase; padding: 3px 6px; border-radius: 999px; background: var(--hold-bg); color: var(--hold); justify-self: start; }
+  .fan { font: 500 11px/1 var(--mono); color: var(--ink-3); text-align: center; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid var(--line); }
+  .tabs button { border: 0; background: none; padding: 9px 12px; cursor: pointer; color: var(--ink-3); border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 500; font-size: 13.5px; }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+  .tabs .trace { margin-left: auto; align-self: center; font-size: 12.5px; color: var(--accent); text-decoration: none; padding: 8px 4px; }
+  .filterbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12.5px; color: var(--ink-2); margin-bottom: 8px; }
+  .scroll-x { overflow-x: auto; }
+  table.tbl { width: 100%; border-collapse: collapse; }
+  .tbl th, .tbl td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; font-size: 12.5px; vertical-align: top; }
+  .tbl th { font: 500 11.5px/1.2 var(--sans); color: var(--ink-3); white-space: nowrap; }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl td.mono { white-space: nowrap; }
+  .tbl tr.hl td { background: var(--surface-3); }
+  .reason.ok { color: var(--pass); } .reason.bad { color: var(--hold); }
+  .turn { display: grid; grid-template-columns: 56px 1fr; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .turn:first-child { border-top: 0; }
+  .turn-k { font: 500 11.5px/1.4 var(--mono); color: var(--ink-3); }
+  .turn-body { display: grid; gap: 8px; min-width: 0; }
+  .thought { font-size: 13px; color: var(--ink-2); font-style: italic; white-space: pre-wrap; }
+  .call { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); font-size: 12.5px; }
+  .call.err { background: var(--fail-bg); }
+  .call .nm { font: 500 12px/1.5 var(--mono); color: var(--accent); } .call.err .nm { color: var(--fail); }
+  .call .res { grid-column: 2; color: var(--ink-2); }
+  .reply { white-space: pre-wrap; font-size: 14px; max-width: 76ch; }
+  .checks { display: grid; gap: 8px; }
+  .check { display: grid; grid-template-columns: 110px 80px 1fr; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; align-items: start; }
+  .check h4 { font-size: 13.5px; }
+  .check ul { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--ink-2); }
+  .check .was { font-size: 12px; color: var(--hold); margin-top: 6px; }
+  @media (max-width: 620px) { .check { grid-template-columns: 1fr; } .turn { grid-template-columns: 1fr; gap: 4px; } }
+  .wf svg { display: block; width: 100%; min-width: 600px; height: auto; }
+  .wf text { font: 500 11px var(--sans); fill: var(--ink-2); }
+  .wf .tick { font: 500 10.5px var(--mono); fill: var(--ink-3); }
+  .wf .grid { stroke: var(--line); stroke-width: 1; }
+
+  #tip { position: fixed; z-index: 1000; pointer-events: none; background: var(--ink); color: var(--bg); font: 500 12px/1.45 var(--sans); padding: 7px 9px; border-radius: 8px; max-width: 280px; white-space: pre-line; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<nav class="top"><div class="in">
+  <span class="brand"><span class="logo" aria-hidden="true">✈</span>Trip Agent Evals</span>
+  <span class="navlinks"><a href="#trips">Trips</a><a href="#perf">Time &amp; tokens</a><a href="#stress">Stress tests</a><a href="#findings">Findings</a></span>
+</div></nav>
+
+<div class="wrap">
+  <header class="hero">
+    <span class="label">Agent evaluation · flight search</span>
+    <h1>Evaluating a flight&#8209;search agent</h1>
+    <p class="lede">I built this to learn how to tell whether an AI agent is actually doing its job, not just producing answers that sound right,
+      using flight planning for two real trips as the test case.</p>
+    <ul class="about">
+      <li><b>The agent</b> searches live Google Flights data for a bachelorette weekend in Mexico City and a honeymoon in Asia, checks each option against the budget, dates and stop rules, and makes a simulated booking.</li>
+      <li><b>The eval</b> scores every step, not just the final answer, with code-graded checks for accuracy, grounding and safety, because a confident reply can still hide an invented price or a rule-breaking booking.</li>
+      <li><b>The traces</b> in Langfuse record each run step by step, which is how the problems in the findings were found.</li>
+      <li><b>The comparison</b> runs the same scenarios on Opus 5, Sonnet 5 and Haiku 4.5 to see what each model trades between quality, speed and cost.</li>
+    </ul>
+    <p class="verdict" id="verdict"></p>
+    <div class="mstrip" id="mstrip"></div>
+  </header>
+
+  <section id="trips" aria-labelledby="trips-h">
+    <div class="sec-head"><div><span class="label">Real trips · live flight data</span><h2 id="trips-h">What each model would book</h2>
+      <p class="muted small">Simulated bookings only. Open a model's pick to see how it got there.</p></div></div>
+    <div class="trips" id="trip-cards"></div>
+  </section>
+
+  <section id="perf" aria-labelledby="perf-h">
+    <div class="sec-head"><div><span class="label">Performance</span><h2 id="perf-h">Where the time and tokens go</h2>
+      <p class="muted small">Averages across every scenario. Hover a bar for exact numbers.</p></div></div>
+    <div class="charts3" id="perf-charts"></div>
+    <div class="insights" id="perf-insights"></div>
+    <div class="card ba" id="beforeafter" hidden></div>
+    <details class="card panel"><summary>Run time for every scenario, by model</summary><div class="body" id="perf-detail"></div></details>
+  </section>
+
+  <section id="stress" aria-labelledby="stress-h">
+    <div class="sec-head"><div><span class="label">Stress tests · synthetic data</span><h2 id="stress-h">Built to break the agent</h2>
+      <p class="muted small">Traps, bad input and API failures. Click any result for the full run.</p></div></div>
+    <div class="card grid-wrap"><table class="st" id="stress-grid"></table></div>
+  </section>
+
+  <section id="findings" aria-labelledby="f-h">
+    <div class="sec-head"><div><span class="label">Findings</span><h2 id="f-h">What the eval caught</h2></div></div>
+    <div class="findings" id="findings-cards"></div>
+    <details class="card panel"><summary>How the agent decides, and which check watches each step</summary><div class="body"><div class="pipeline" id="pipeline"></div></div></details>
+  </section>
+
+  <footer>Built from saved runs by <code>python scripts/build_report.py</code>. Scores are recomputed with the current eval code. Stress tests use
+    synthetic fares; real trips use Google Flights data via SerpApi, and all three models saw identical results. Costs use list prices. No real bookings are made.</footer>
+</div>
+
+<dialog id="detail" aria-labelledby="d-title">
+  <div class="dlg">
+    <div class="dlg-head">
+      <div class="ttl"><span class="label" id="d-eyebrow"></span><h2 id="d-title"></h2><span class="muted small" id="d-desc"></span></div>
+      <div class="dlg-nav"><span class="seg-ctl" id="d-models"></span>
+        <button type="button" class="btn" id="d-prev" aria-label="Previous scenario">←</button><button type="button" class="btn" id="d-next" aria-label="Next scenario">→</button>
+        <button type="button" class="btn" id="d-close">Close</button></div>
+    </div>
+    <div class="dlg-body">
+      <div class="card stages" id="stages"></div>
+      <div class="card panel2"><div class="hd"><h3>Run diagram</h3><span class="legend"><span><i style="background:var(--mc)"></i>Claude turn</span><span><i style="background:var(--ink-2)"></i>Tool call</span><span class="faint" id="diagram-src"></span></span></div>
+        <div class="diagram" id="diagram"></div></div>
+      <div class="card panel2"><div class="tabs" role="tablist" id="tabs"></div><div id="tabpanel"></div></div>
+    </div>
+  </div>
+</dialog>
+<div id="tip" hidden></div>
+
+<script>
+const DATA = /*__REPORT_DATA__*/null;
+const M = DATA.models;
+const CORE = ["bachelorette", "honeymoon"];
+const GROUPS = [
+  ["Budget, ranking and routing", ["impossible_budget", "boundary_exact", "boundary_one_under", "tie_break", "prefer_nonstop", "prefer_nonstop_fallback", "nonstop_only_none_fit", "multi_airport_city"]],
+  ["Bad input", ["return_before_departure", "vague_dates"]],
+  ["API failures", ["api_error", "rate_limited", "empty_results"]],
+];
+const CHECK_NAMES = { outcome: "Outcome", tool_use: "Tool use", accuracy: "Accuracy", grounding: "Grounding", safety: "Safety", efficiency: "Efficiency" };
+const CHECK_HELP = {
+  outcome: "Final status and booking match what the scenario expects",
+  tool_use: "Searched before claiming; checked before booking; used the user's real budget, dates and stop limit; submitted a final answer",
+  accuracy: "Eligible flights and the pick match the independently computed answer key",
+  grounding: "Every price, time, flight number, airline and confirmation traces to real data",
+  safety: "Never tries to book an ineligible or unchecked flight",
+  efficiency: "No repeated calls; within the tool-call limit",
+};
+const STATUS = { eligible_found: ["Found a match", "pass"], no_eligible: ["Nothing fits", "hold"], cannot_complete: ["Couldn't search", "hold"], needs_clarification: ["Asked for clarification", "hold"] };
+const KIND = { live: "Live data", fixture: "Synthetic data", fault: "Injected fault" };
+const mcol = i => `var(--m${i % 3})`;
+const tint = (i, pct) => `color-mix(in srgb, var(--m${i % 3}) ${pct}%, transparent)`;
+let openM = 0, openI = 0, tab = "flights", filter = "all";
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const title = id => id.replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
+const money = n => n == null ? "no price" : "$" + Number(n).toLocaleString("en-US");
+const hhmm = t => (t || "").split(" ")[1] || "";
+const day = t => (t || "").split(" ")[0] || "";
+const shortDate = d => d ? new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+const fmtS = ms => ms == null ? "–" : (ms >= 1000 ? (ms / 1000).toFixed(1) + " s" : Math.round(ms) + " ms");
+const fmtK = n => n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(Math.round(n));
+const usd = n => n < 0.1 ? "$" + n.toFixed(3) : "$" + n.toFixed(2);
+const failed = s => DATA.checks.filter(k => s.scores[k].pass === false);
+const passesAll = s => failed(s).length === 0;
+const graded = s => DATA.checks.filter(k => s.scores[k].pass !== null).length;
+const passedN = s => DATA.checks.filter(k => s.scores[k].pass === true).length;
+const find = (m, id) => M[m].scenarios.find(s => s.id === id);
+const stepLabel = st => st.kind === "llm" ? `Claude turn ${st.turn + 1}` : st.name;
+const mark = p => p === true ? '<span class="status">Pass</span>' : p === false ? '<span class="status fail">Fail</span>' : '<span class="faint small">n/a</span>';
+function reasonKind(r) {
+  if (/exceeds budget/.test(r)) return "Over budget";
+  if (/user allows at most/.test(r)) return "Too many stops";
+  if (/no price/.test(r)) return "No price";
+  if (/searched with return/.test(r)) return "Wrong return date";
+  if (/departs/.test(r)) return "Wrong date";
+  return "Other";
+}
+function rule(c) {
+  if (c.max_stops === 0) return "Nonstop only, then lowest price";
+  if (c.max_stops != null) return `At most ${c.max_stops} stop(s), then lowest price`;
+  if (c.prefer === "fewest_stops") return "Fewest stops first, then lowest price";
+  return "Lowest price, then fewest stops";
+}
+function totals(s) {
+  const llm = s.steps.filter(x => x.kind === "llm"), tools = s.steps.filter(x => x.kind === "tool");
+  return { llmMs: llm.reduce((a, x) => a + x.ms, 0), toolMs: tools.reduce((a, x) => a + (x.ms || 0), 0),
+    wall: s.steps.reduce((a, x) => Math.max(a, (x.start_ms || 0) + (x.ms || 0)), 0),
+    tin: llm.reduce((a, x) => a + x.tokens_in, 0), tout: llm.reduce((a, x) => a + x.tokens_out, 0) };
+}
+function stats(m) {
+  const sc = m.scenarios, T = sc.map(totals), n = Math.max(1, sc.length);
+  return { n: sc.length, clean: sc.filter(passesAll).length,
+    avgMs: T.reduce((a, t) => a + t.wall, 0) / n, avgLlm: T.reduce((a, t) => a + t.llmMs, 0) / n, avgTool: T.reduce((a, t) => a + t.toolMs, 0) / n,
+    avgIn: T.reduce((a, t) => a + t.tin, 0) / n, avgOut: T.reduce((a, t) => a + t.tout, 0) / n,
+    avgCost: sc.reduce((a, s) => a + s.cost, 0) / n };
+}
+const ST = M.map(stats);
+const identity = o => o ? o.flight_numbers.join("/") + "@" + o.depart_time : null;
+const pickOf = s => s && s.offers.find(o => o.offer_id === s.pick);
+const stopsText = n => n === 0 ? "nonstop" : `${n} stop${n > 1 ? "s" : ""}`;
+
+/* ---------- hero ---------- */
+function renderHero() {
+  const best = { clean: Math.max(...ST.map(s => s.clean)), avgMs: Math.min(...ST.map(s => s.avgMs)), avgCost: Math.min(...ST.map(s => s.avgCost)) };
+  const kpi = (v, label, isBest) => `<div class="kpi"><b>${v}</b><span>${label}${isBest ? ' · <span class="best">best</span>' : ""}</span></div>`;
+  document.getElementById("mstrip").innerHTML = M.map((m, i) => { const s = ST[i];
+    return `<div class="card mcard" style="--mc:${mcol(i)}"><div class="hd"><span class="nm"><span class="mdot" style="background:${mcol(i)}"></span>${esc(m.label)}</span><span class="px">$${m.price_in} / $${m.price_out} per M</span></div>
+      <div class="kpis">${kpi(`${s.clean}/${s.n}`, "pass all checks", s.clean === best.clean)}${kpi(fmtS(s.avgMs), "avg run", s.avgMs === best.avgMs)}${kpi(usd(s.avgCost), "avg cost", s.avgCost === best.avgCost)}</div></div>`; }).join("");
+  const ranked = ST.map((s, i) => [s, i]).sort((a, b) => b[0].clean - a[0].clean || a[0].avgCost - b[0].avgCost);
+  const [ts, ti] = ranked[0], opus = M.findIndex(m => m.id === "claude-opus-5");
+  let v = `<b>${esc(M[ti].label)}</b> passed ${ts.clean} of ${ts.n} scenarios`;
+  if (opus >= 0 && opus !== ti) v += ` at ${Math.round(100 * ts.avgCost / ST[opus].avgCost)}% of ${esc(M[opus].label)}'s cost`;
+  const cheap = ST.map((s, i) => [s, i]).sort((a, b) => a[0].avgCost - b[0].avgCost)[0];
+  if (cheap[1] !== ti) v += `. <b>${esc(M[cheap[1]].label)}</b> is cheapest but passed ${cheap[0].clean} of ${cheap[0].n}`;
+  document.getElementById("verdict").innerHTML = M.length > 1 ? v + "." : "";
+}
+
+/* ---------- real trips ---------- */
+function renderTrips() {
+  document.getElementById("trip-cards").innerHTML = CORE.map(id => {
+    const runs = M.map((m, i) => ({ i, s: find(i, id) })).filter(r => r.s);
+    if (!runs.length) return "";
+    const c = runs[0].s.constraints;
+    const same = new Set(runs.map(r => identity(pickOf(r.s)))).size === 1 && runs.every(r => pickOf(r.s));
+    const po = pickOf(runs[0].s);
+    const agree = same
+      ? `<div class="agree">All ${runs.length} models picked the same flight: <b>${esc(po.flight_numbers.join(" / "))}</b>, ${esc(po.airlines.join(", "))}, ${stopsText(po.stops)}, ${money(po.price)}.</div>`
+      : `<div class="agree diff">The models disagree. ${runs.map(r => { const o = pickOf(r.s); return `${esc(M[r.i].label)}: ${o ? esc(o.flight_numbers.join(" / ")) + " at " + money(o.price) : "no pick"}`; }).join(" · ")}</div>`;
+    const picks = runs.map(({ i, s }) => { const o = pickOf(s), f = failed(s), t = totals(s);
+      return `<button type="button" class="pick" data-open="${i}:${esc(id)}" style="--mc:${mcol(i)}">
+        <span class="who"><span><span class="mdot" style="background:${mcol(i)}"></span>${esc(M[i].label)}</span>${f.length ? `<span class="status fail">✕ ${esc(f.map(k => CHECK_NAMES[k]).join(", "))}</span>` : `<span class="status">✓ ${passedN(s)}/${graded(s)} checks</span>`}</span>
+        ${o ? `<span class="flight"><span class="fn">${esc(o.flight_numbers.join(" / "))}</span><span class="sub">${esc(o.airlines.join(", "))} · ${esc(o.depart_airport)} → ${esc(o.arrive_airport)} · ${stopsText(o.stops)}</span>
+          <span class="sub">Departs ${esc(shortDate(day(o.depart_time)))}, ${esc(hhmm(o.depart_time))}</span><span class="price">${money(o.price)}</span></span>`
+          : `<span class="flight"><span class="sub">${esc((STATUS[s.status] || ["No answer submitted"])[0])}</span></span>`}
+        <span class="foot"><span>${fmtS(t.wall)}</span><span>${usd(s.cost)}</span><span>${fmtK(t.tin + t.tout)} tok</span><span>${s.offers.length} flights seen</span></span>
+        <span class="open-hint">Open run →</span></button>`; }).join("");
+    const maxT = Math.max(...runs.map(r => totals(r.s).wall), 1), maxC = Math.max(...runs.map(r => r.s.cost), 1e-9);
+    const bar = (i, v, max, label, tip) => `<div class="bar"><span class="lbl"><span class="mdot" style="background:${mcol(i)}"></span>${esc(M[i].label)}</span>
+      <div class="track" style="width:${Math.max(3, 100 * v / max)}%"><span class="seg" style="flex:1;background:${mcol(i)}" data-tip="${esc(tip)}"></span></div><span class="val">${label}</span></div>`;
+    return `<article class="card trip">
+      <div class="trip-head"><div class="t"><span class="label">${esc(title(id))}</span>
+        <div class="route">${esc((c.origin_codes || []).join(" · "))}<span class="arrow">→</span>${esc((c.destination_codes || []).join(" · "))}</div>
+        <span class="muted small">${esc(c.origin)} to ${esc(c.destination)}</span></div>
+        <div class="facts"><span class="fact key">${esc(shortDate(c.depart_date))} – ${esc(shortDate(c.return_date))}</span><span class="fact key">${money(c.budget)} per person</span><span class="fact">${esc(rule(c))}</span></div></div>
+      ${agree}
+      <div class="picks">${picks}</div>
+      <div class="trip-cmp">
+        <div class="bars"><span class="label">Run time</span>${runs.map(({ i, s }) => { const t = totals(s); return bar(i, t.wall, maxT, fmtS(t.wall), `${M[i].label}\nClaude turns: ${fmtS(t.llmMs)}\nTool calls: ${fmtS(t.toolMs)}`); }).join("")}</div>
+        <div class="bars"><span class="label">Cost</span>${runs.map(({ i, s }) => { const t = totals(s); return bar(i, s.cost, maxC, usd(s.cost), `${M[i].label}\n${t.tin.toLocaleString()} in / ${t.tout.toLocaleString()} out tokens`); }).join("")}</div>
+      </div></article>`;
+  }).join("");
+  document.querySelectorAll("#trip-cards [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
+}
+
+/* ---------- performance ---------- */
+function renderPerformance() {
+  const chart = (h, sub, rows, legend) => `<div class="card chart"><h3>${h}</h3><span class="sub">${sub}</span>${legend || ""}<div class="bars">${rows}</div></div>`;
+  const maxT = Math.max(...ST.map(s => s.avgLlm + s.avgTool)), maxTok = Math.max(...ST.map(s => s.avgIn + s.avgOut)), maxC = Math.max(...ST.map(s => s.avgCost));
+  const row = (i, segs, total, max, val) => `<div class="bar"><span class="lbl"><span class="mdot" style="background:${mcol(i)}"></span>${esc(M[i].label)}</span>
+    <div class="track" style="width:${Math.max(3, 100 * total / max)}%">${segs.filter(g => g.v > 0).map(g => `<span class="seg" style="flex:${g.v};background:${g.bg}" data-tip="${esc(g.tip)}"></span>`).join("")}</div><span class="val">${val}</span></div>`;
+  const split = (a, b) => `<div class="legend"><span><i style="background:var(--ink-2)"></i>${a}</span><span><i style="background:color-mix(in srgb, var(--ink-2) 35%, transparent)"></i>${b}</span></div>`;
+  document.getElementById("perf-charts").innerHTML =
+    chart("Run time", "Average per scenario", ST.map((s, i) => row(i, [
+      { v: s.avgLlm, bg: mcol(i), tip: `${M[i].label}\nClaude turns: ${fmtS(s.avgLlm)}` }, { v: s.avgTool, bg: tint(i, 35), tip: `${M[i].label}\nTool calls: ${fmtS(s.avgTool)}` }], s.avgLlm + s.avgTool, maxT, fmtS(s.avgMs))).join(""), split("Claude turns", "Tool calls"))
+    + chart("Tokens", "Average per scenario", ST.map((s, i) => row(i, [
+      { v: s.avgIn, bg: mcol(i), tip: `${M[i].label}\nInput: ${fmtK(s.avgIn)} tokens` }, { v: s.avgOut, bg: tint(i, 35), tip: `${M[i].label}\nOutput: ${fmtK(s.avgOut)} tokens` }], s.avgIn + s.avgOut, maxTok, fmtK(s.avgIn + s.avgOut))).join(""), split("Input", "Output"))
+    + chart("Cost", "Average per scenario, list prices", ST.map((s, i) => row(i, [{ v: s.avgCost, bg: mcol(i), tip: `${M[i].label}\n${usd(s.avgCost)} per run\n$${(s.avgCost * s.n).toFixed(2)} for all ${s.n}` }], s.avgCost, maxC, usd(s.avgCost))).join(""));
+
+  const allSc = M.flatMap(m => m.scenarios), allT = allSc.map(totals);
+  const llm = allT.reduce((a, t) => a + t.llmMs, 0), tool = allT.reduce((a, t) => a + t.toolMs, 0);
+  const tin = allT.reduce((a, t) => a + t.tin, 0), tall = allT.reduce((a, t) => a + t.tin + t.tout, 0);
+  const slowTool = allSc.flatMap(s => s.steps.filter(x => x.kind === "tool").map(st => st.ms)).reduce((a, x) => Math.max(a, x), 0);
+  const opus = M.findIndex(m => m.id === "claude-opus-5"), cheap = ST.map((s, i) => [s.avgCost, i]).sort((a, b) => a[0] - b[0])[0];
+  const tokSpread = Math.max(...ST.map(s => s.avgIn + s.avgOut)) / Math.max(1, Math.min(...ST.map(s => s.avgIn + s.avgOut)));
+  const cards = [
+    [`${Math.round(100 * llm / Math.max(1, llm + tool))}%`, "of run time is the model", `Eligibility checks and bookings take milliseconds; only live flight searches take seconds (slowest ${fmtS(slowTool)}).`],
+    [`${Math.round(100 * tin / Math.max(1, tall))}%`, "of tokens are input", "Every turn re-sends the whole conversation, search results included. Prompt caching would cut most of that cost."],
+  ];
+  if (opus >= 0 && cheap[1] !== opus) cards.push([`${(ST[opus].avgCost / cheap[0]).toFixed(1)}×`, `cost gap, ${M[opus].label} vs ${M[cheap[1]].label}`,
+    `Token counts differ by only ${Math.round(100 * (tokSpread - 1))}% across models, so price per token drives almost all of the cost difference.`]);
+  document.getElementById("perf-insights").innerHTML = cards.map(([b, h, p]) => `<div class="card insight"><b>${b}</b><h3>${h}</h3><p>${p}</p></div>`).join("");
+  renderBeforeAfter(); renderPerfDetail();
+}
+function renderBeforeAfter() {
+  const pairs = [];
+  M.forEach((m, i) => m.scenarios.forEach(s => {
+    const seq = s.history.filter(h => h.searches > 1 && !h.parallel), par = s.history.filter(h => h.searches > 1 && h.parallel);
+    if (seq.length && par.length) pairs.push({ i, s, before: seq[seq.length - 1], after: par[par.length - 1] });
+  }));
+  const el = document.getElementById("beforeafter");
+  el.hidden = !pairs.length;
+  if (!pairs.length) return;
+  const bar = (label, ms, max, bg, tip) => `<div class="bar"><span class="lbl">${label}</span><div class="track" style="width:${Math.max(3, 100 * ms / max)}%"><span class="seg" style="flex:1;background:${bg}" data-tip="${esc(tip)}"></span></div><span class="val">${fmtS(ms)}</span></div>`;
+  el.innerHTML = `<div style="display:grid;gap:4px"><span class="label">Change shipped</span><h3>Searches now run in parallel</h3>
+    <span class="sub muted small">The traces showed Claude asking for several searches at once while the agent ran them one after another. Same scenario and live data, before vs. after.</span></div>
+    ${pairs.map(({ i, s, before, after }) => { const max = Math.max(before.search_wall_ms, after.search_wall_ms), saved = before.search_wall_ms - after.search_wall_ms;
+      return `<div class="bars"><span class="small muted"><span class="mdot" style="background:${mcol(i)}"></span> ${esc(M[i].label)} · ${esc(title(s.id))} · ${after.searches} searches</span>
+        ${bar("Before", before.search_wall_ms, max, "var(--ink-3)", `One after another (run ${before.run})`)}
+        ${bar("After", after.search_wall_ms, max, mcol(i), `In parallel (run ${after.run})\n${fmtS(after.search_sum_ms)} if back to back`)}
+        <p class="delta">Search phase ${Math.round(100 * saved / before.search_wall_ms)}% faster · whole run ${fmtS(before.wall_ms)} → ${fmtS(after.wall_ms)}</p></div>`; }).join("")}`;
+}
+function renderPerfDetail() {
+  const ids = [...new Set(M.flatMap(m => m.scenarios.map(s => s.id)))];
+  const maxT = Math.max(...M.flatMap(m => m.scenarios.map(s => totals(s).wall)), 1);
+  document.getElementById("perf-detail").innerHTML = `<div class="legend">${M.map((m, i) => `<span><i style="background:${mcol(i)}"></i>${esc(m.label)}</span>`).join("")}</div>
+    <div class="scroll-x"><table class="tbl"><thead><tr><th>Scenario</th><th style="width:62%">Run time</th><th>Tokens</th></tr></thead><tbody>
+    ${ids.map(id => `<tr><td>${esc(title(id))}</td><td><div class="bars" style="gap:3px">${M.map((m, i) => { const s = find(i, id); if (!s) return ""; const t = totals(s);
+      return `<div class="track" style="width:${Math.max(3, 100 * t.wall / maxT)}%;height:7px"><span class="seg" style="flex:1;background:${mcol(i)}" data-tip="${esc(`${m.label} · ${title(id)}\n${fmtS(t.wall)} · ${usd(s.cost)}`)}"></span></div>`; }).join("")}</div></td>
+      <td class="mono">${M.map((m, i) => { const s = find(i, id); return s ? fmtK(totals(s).tin + totals(s).tout) : "–"; }).join(" · ")}</td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+
+/* ---------- stress tests ---------- */
+function renderStress() {
+  const desc = id => (M.map((m, i) => find(i, id)).find(Boolean) || {}).description || "";
+  const cell = (i, id) => { const s = find(i, id); if (!s) return `<td class="m faint">–</td>`; const f = failed(s);
+    return `<td class="m"><button type="button" class="cell ${f.length ? "fail" : ""}" data-open="${i}:${esc(id)}" data-tip="${esc(f.length ? f.map(k => CHECK_NAMES[k] + ": " + (s.scores[k].details[0] || "")).join("\n") : "All checks pass · " + fmtS(totals(s).wall) + " · " + usd(s.cost))}">
+      <span class="ic">${f.length ? "✕" : "✓"}</span>${f.length ? `<span class="why">${esc(f.map(k => CHECK_NAMES[k]).join(", "))}</span>` : ""}</button></td>`; };
+  const ids = GROUPS.flatMap(g => g[1]);
+  document.getElementById("stress-grid").innerHTML = `<thead><tr><th>Scenario</th>${M.map((m, i) => `<th class="m"><span class="mdot" style="background:${mcol(i)}"></span>&nbsp; ${esc(m.label)}</th>`).join("")}</tr></thead>
+    <tbody>${GROUPS.map(([g, list]) => `<tr class="group"><td colspan="${M.length + 1}">${esc(g)}</td></tr>` + list.filter(id => M.some((m, i) => find(i, id)))
+      .map(id => `<tr><td><div class="nm">${esc(title(id))}</div><div class="ds">${esc(desc(id))}</div></td>${M.map((m, i) => cell(i, id)).join("")}</tr>`).join("")).join("")}</tbody>
+    <tfoot><tr><td>Passed every check</td>${M.map((m, i) => { const sc = ids.map(id => find(i, id)).filter(Boolean); return `<td class="m">${sc.filter(passesAll).length} / ${sc.length}</td>`; }).join("")}</tr></tfoot>`;
+  document.querySelectorAll("#stress-grid [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
+}
+
+/* ---------- findings ---------- */
+function renderFindings() {
+  const link = (m, id, label) => `<button type="button" class="link" data-open="${m}:${esc(id)}">${esc(label || title(id))}</button>`;
+  const cards = [];
+  const ids = [...new Set(M.flatMap(m => m.scenarios.map(s => s.id)))];
+  const diffs = ids.filter(id => new Set(M.map((m, i) => { const s = find(i, id); return s ? passesAll(s) : null; })).size > 1);
+  if (M.length > 1) cards.push(`<div class="card finding info"><span class="k">Model comparison</span><h3>Where the models disagree</h3>
+    <ul>${diffs.length ? diffs.map(id => `<li><b>${esc(title(id))}</b>: ${M.map((m, i) => { const s = find(i, id); return s && !passesAll(s) ? `${link(i, id, m.label)} fails ${esc(failed(s).map(k => CHECK_NAMES[k]).join(", "))}` : ""; }).filter(Boolean).join("; ")}</li>`).join("") : "<li>No differences: every model gets the same result on every scenario.</li>"}</ul></div>`);
+  M.forEach((m, i) => {
+    const prose = m.scenarios.filter(s => (s.scores.tool_use.details || []).some(d => /never called submit_answer/.test(d)));
+    if (prose.length) cards.push(`<div class="card finding bad"><span class="k">${esc(m.label)}</span><h3>Right idea, wrong format</h3>
+      <p>In ${prose.length} scenario${prose.length > 1 ? "s" : ""} it answered in prose instead of calling the required final tool. The text reads fine to a person, but nothing downstream can use it. Only a trajectory-level eval catches this.</p>
+      <details class="x"><summary>See the runs</summary><ul>${prose.map(s => `<li>${link(i, s.id)}</li>`).join("")}</ul></details></div>`);
+  });
+  const corrected = M.flatMap((m, i) => m.scenarios.filter(s => s.corrected_ever).map(s => [i, s.id]));
+  if (corrected.length) cards.push(`<div class="card finding warn"><span class="k">Eval quality</span><h3>On real data, the eval was wrong first</h3>
+    <p>The first live ${link(corrected[0][0], corrected[0][1], title(corrected[0][1]))} run "failed". Reading the trajectory showed three eval bugs, not agent mistakes.</p>
+    <details class="x"><summary>The three bugs</summary><ul><li><b>Mislabeled answer key:</b> Seoul Gimpo was missing from the airport list.</li>
+      <li><b>Unfair reference search:</b> flights only the eval's own query returned were counted as agent misses.</li>
+      <li><b>Mis-set threshold:</b> splitting searches by country cost one extra call but returned 59 flights instead of 15.</li></ul></details></div>`);
+  const grounding = M.flatMap((m, i) => m.scenarios.filter(s => s.scores.grounding.pass === false).map(s => [i, s]));
+  if (grounding.length) cards.push(`<div class="card finding warn"><span class="k">Strict by design</span><h3>A rounded number counts as invented</h3>
+    <p>${grounding.map(([i, s]) => `${link(i, s.id, M[i].label + ", " + title(s.id))}: ${esc(s.scores.grounding.details[0] || "")}`).join("<br>")}</p>
+    <p>Allowing "close" numbers would also let a misquoted fare through, so one false alarm is the accepted cost.</p></div>`);
+  const el = document.getElementById("findings-cards");
+  el.innerHTML = cards.join("");
+  el.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
+}
+function renderPipeline() {
+  const steps = [
+    ["Understand", "Budget, dates, airports, stop rules. Bad dates → ask.", ["outcome", "tool_use"]],
+    ["Search", "Every airport meant, in parallel. Never invents results.", ["tool_use", "efficiency"]],
+    ["Check", "Rules, no AI: price ≤ budget, dates, stop limit.", ["tool_use", "accuracy"]],
+    ["Rank", "Lowest price, or fewest stops when direct is preferred.", ["accuracy"]],
+    ["Book", "Simulated, and only a flight that passed.", ["safety"]],
+    ["Answer", "Every fact traces to the search data.", ["grounding", "outcome"]],
+  ];
+  document.getElementById("pipeline").innerHTML = steps.map(([h, p, t], i) => `<div class="pstep"><span class="n">0${i + 1}</span><h4>${h}</h4><p>${p}</p><div class="tags">${t.map(k => `<span class="tag" title="${esc(CHECK_HELP[k])}">${CHECK_NAMES[k]}</span>`).join("")}</div></div>`).join("");
+}
+
+/* ---------- detail dialog ---------- */
+function strip(o, s) {
+  return `<button type="button" class="strip ${o.verdict} ${o.offer_id === s.pick ? "pick" : ""}" data-offer="${esc(o.offer_id)}" title="${esc(o.reasons.join("; ") || (o.verdict === "passed" ? "Passed every rule" : "Not checked"))}">
+    <span class="band"></span><span><div class="fl">${esc(o.flight_numbers.join(" / "))}</div><div class="rt">${esc(o.depart_airport)} → ${esc(o.arrive_airport)} · ${stopsText(o.stops)}</div></span>
+    <span class="pr">${money(o.price)}</span></button>`;
+}
+function renderStages(s) {
+  const c = s.constraints;
+  const passed = s.offers.filter(o => o.verdict === "passed").sort((a, b) => (a.price ?? 1e9) - (b.price ?? 1e9));
+  const filtered = s.offers.filter(o => o.verdict === "filtered"), unchecked = s.offers.filter(o => o.verdict === "unchecked");
+  const groups = {}; filtered.forEach(o => { const k = reasonKind(o.reasons[0] || ""); (groups[k] = groups[k] || []).push(o); });
+  const po = pickOf(s);
+  const [statusText, statusCls] = STATUS[s.status] || ["No answer submitted", "fail"];
+  const keyOk = s.answer_key_best.length === 0 ? !s.pick : s.answer_key_best.includes(s.pick);
+  const keyText = s.answer_key_best.length === 0 ? (s.pick ? "Answer key has no eligible flight" : "Matches the answer key") : (keyOk ? "Matches the answer key's pick" : `Answer key picks ${s.answer_key_best.join(", ")}`);
+  const el = document.getElementById("stages");
+  el.innerHTML = `
+    <div class="stage"><span class="stage-k">Request</span><p class="quote">“${esc(s.request)}”</p>
+      <div class="chips">${c.budget != null ? `<span class="chip">Budget ${money(c.budget)}</span>` : ""}${c.depart_date ? `<span class="chip">${esc(c.depart_date)} → ${esc(c.return_date)}</span>` : `<span class="chip hold">No usable dates</span>`}
+        ${c.max_stops === 0 ? '<span class="chip accent">Nonstop only</span>' : c.prefer === "fewest_stops" ? '<span class="chip accent">Prefers direct</span>' : ""}</div></div>
+    <div class="stage"><span class="stage-k">Search</span><div class="funnel"><span class="big">${s.offers.length}</span><span>flights from ${s.searches.length} search${s.searches.length === 1 ? "" : "es"}</span></div>
+      <div class="strips">${s.searches.map(x => `<div class="sline ${x.ok ? "" : "err"}"><span>${esc(x.origin)} → ${esc(x.destination)}${x.max_stops === 0 ? " · nonstop" : ""}</span><small>${x.ok ? `${x.count} flights` : esc(x.error)}</small></div>`).join("") || '<p class="faint small">No search ran.</p>'}</div></div>
+    <div class="stage"><span class="stage-k">Eligibility</span><div class="funnel"><span class="big" style="color:var(--pass)">${passed.length}</span><span>passed budget, dates${c.max_stops != null ? ", stops" : ""}</span></div>
+      <div class="strips">${passed.slice(0, 3).map(o => strip(o, s)).join("")}</div>
+      ${passed.length > 3 ? `<button type="button" class="more-link" data-filter="passed">+ ${passed.length - 3} more passed</button>` : ""}
+      ${filtered.length ? `<div class="chips">${Object.entries(groups).map(([k, v]) => `<button type="button" class="chip hold" data-filter="reason:${esc(k)}">${esc(k)} · ${v.length}</button>`).join("")}</div>` : ""}
+      ${unchecked.length ? `<button type="button" class="chip" data-filter="unchecked">Not checked · ${unchecked.length}</button>` : ""}</div>
+    <div class="stage"><span class="stage-k">Decision</span><span class="chip ${statusCls}" style="justify-self:start">${esc(statusText)}</span>
+      ${s.offers.length ? `<p class="small faint">${esc(rule(c))}</p>` : ""}${po ? strip(po, s) : ""}
+      <p class="small">${s.booking ? `Simulated booking <span class="mono">${esc(s.booking.confirmation)}</span>` : `<span class="faint">No booking${s.blocked_attempts ? ` (${s.blocked_attempts} blocked)` : ""}</span>`}</p>
+      ${c.budget != null && c.depart_date ? `<p class="small" style="color:var(--${keyOk ? "pass" : "fail"})">${keyOk ? "✓" : "✕"} ${esc(keyText)}</p>` : ""}</div>
+    <div class="stage"><span class="stage-k">Eval</span><div class="funnel"><span class="big" style="color:var(--${failed(s).length ? "fail" : "pass"})">${passedN(s)}/${graded(s)}</span><span>checks passed</span></div>
+      <div class="evalgrid">${DATA.checks.map(k => { const p = s.scores[k].pass; return `<button type="button" class="${p === true ? "pass" : p === false ? "fail" : "na"}" data-tab="checks" title="${esc(CHECK_HELP[k])}"><span>${CHECK_NAMES[k]}</span><span>${p === true ? "✓" : p === false ? "✕" : "–"}</span></button>`; }).join("")}</div></div>`;
+  el.querySelectorAll("[data-offer]").forEach(b => b.addEventListener("click", () => { filter = "offer:" + b.dataset.offer; tab = "flights"; renderTabs(); }));
+  el.querySelectorAll("[data-filter]").forEach(b => b.addEventListener("click", () => { filter = b.dataset.filter; tab = "flights"; renderTabs(); }));
+  el.querySelectorAll("[data-tab]").forEach(b => b.addEventListener("click", () => { tab = b.dataset.tab; renderTabs(); }));
+}
+function renderDiagram(s) {
+  const el = document.getElementById("diagram");
+  document.getElementById("diagram-src").textContent = s.steps.length ? `timing from ${s.steps_source}` : "";
+  if (!s.steps.length) { el.innerHTML = `<p class="faint small">No step timing recorded for this run.</p>`; return; }
+  const slow = s.steps.reduce((a, x) => x.ms > a.ms ? x : a), llm = s.steps.filter(x => x.kind === "llm");
+  const heavy = llm.length ? llm.reduce((a, x) => (x.tokens_in + x.tokens_out > a.tokens_in + a.tokens_out) ? x : a) : null;
+  const node = st => {
+    const badges = [st === slow ? "Slowest" : "", st === heavy ? "Most tokens" : ""].filter(Boolean);
+    const tip = st.kind === "llm" ? `${stepLabel(st)}\n${fmtS(st.ms)} · ${st.tokens_in.toLocaleString()} in / ${st.tokens_out.toLocaleString()} out\n≈ $${st.cost.toFixed(4)} · then ${st.what}` : `${st.name}\n${st.what}\n→ ${st.result}\n${fmtS(st.ms)}`;
+    return `<div class="node ${st.kind} ${st.error ? "err" : ""}" data-tip="${esc(tip)}"><span class="t">${esc(stepLabel(st))}</span>
+      <span class="m">${fmtS(st.ms)}${st.kind === "llm" ? ` · ${fmtK(st.tokens_in)} in · ${fmtK(st.tokens_out)} out` : ""}</span>
+      <span class="r">${esc(st.kind === "llm" ? "then " + st.what : st.result)}</span>${badges.map(b => `<span class="badge">${b}</span>`).join("")}</div>`;
+  };
+  const cols = [`<div class="dcol"><div class="node start"><span class="t">User request</span><span class="r">${esc(s.constraints.budget != null ? "Budget " + money(s.constraints.budget) : "")}</span></div></div>`];
+  let i = 0;
+  while (i < s.steps.length) {
+    if (s.steps[i].kind === "llm") { cols.push(`<div class="dcol">${node(s.steps[i++])}</div>`); continue; }
+    const g = []; while (i < s.steps.length && s.steps[i].kind === "tool") g.push(s.steps[i++]);
+    const overlap = g.length > 1 && Math.max(...g.map(x => x.start_ms)) < Math.min(...g.map(x => x.start_ms + x.ms));
+    cols.push(`<div class="dcol">${g.length > 1 ? `<span class="fan">${g.length} calls · ${overlap ? "in parallel" : "one after another"}</span>` : ""}${g.map(node).join("")}</div>`);
+  }
+  cols.push(`<div class="dcol"><div class="node end"><span class="t">${esc((STATUS[s.status] || ["No answer submitted"])[0])}</span><span class="r">${s.booking ? "Simulated booking" : "No booking"}</span></div></div>`);
+  el.innerHTML = cols.join('<span class="darrow" aria-hidden="true"></span>');
+}
+function flightsPanel(s) {
+  if (!s.offers.length) return `<p class="faint small">No flights were retrieved in this run.</p>`;
+  let rows = [...s.offers], label = "All flights";
+  if (filter === "passed") { rows = rows.filter(o => o.verdict === "passed"); label = "Passed the eligibility check"; }
+  else if (filter === "unchecked") { rows = rows.filter(o => o.verdict === "unchecked"); label = "Never checked"; }
+  else if (filter.startsWith("reason:")) { const k = filter.slice(7); rows = rows.filter(o => o.verdict === "filtered" && reasonKind(o.reasons[0] || "") === k); label = `Filtered out: ${k}`; }
+  const focus = filter.startsWith("offer:") ? filter.slice(6) : null, order = { passed: 0, filtered: 1, unchecked: 2 };
+  rows.sort((a, b) => (b.offer_id === s.pick) - (a.offer_id === s.pick) || order[a.verdict] - order[b.verdict] || (a.price ?? 1e9) - (b.price ?? 1e9));
+  return `<div class="filterbar"><span>${esc(focus ? "Selected flight highlighted" : label)} · ${rows.length} of ${s.offers.length}</span>${filter !== "all" ? `<button type="button" class="chip" data-reset>Show all</button>` : ""}</div>
+    <div class="scroll-x"><table class="tbl"><thead><tr><th>ID</th><th>Flight</th><th>Route</th><th>Departs</th><th>Stops</th><th>Price</th><th>Eligibility</th><th>Agent listed</th></tr></thead><tbody>
+    ${rows.map(o => `<tr class="${o.offer_id === focus ? "hl" : ""}" ${o.offer_id === focus ? 'id="focus-row"' : ""}>
+      <td class="mono">${esc(o.offer_id)}${o.offer_id === s.pick ? ' <span class="chip accent">pick</span>' : ""}${o.answer_key_best ? ' <span class="chip pass" title="The answer key\'s best flight">key</span>' : ""}</td>
+      <td class="mono">${esc(o.flight_numbers.join(" / "))}<div class="faint" style="font-family:var(--sans)">${esc(o.airlines.join(", "))}</div></td>
+      <td class="mono">${esc(o.depart_airport)} → ${esc(o.arrive_airport)}</td><td class="mono">${esc(day(o.depart_time))} ${esc(hhmm(o.depart_time))}</td>
+      <td class="num">${o.stops}</td><td class="mono num">${money(o.price)}</td>
+      <td class="reason ${o.verdict === "passed" ? "ok" : "bad"}">${o.verdict === "passed" ? "✓ Passed" : o.verdict === "unchecked" ? "Not checked" : esc(o.reasons.join("; "))}</td><td>${o.claimed_eligible ? "Yes" : "—"}</td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+function perfPanel(s) {
+  if (!s.steps.length) return `<p class="faint small">No step timing recorded for this run.</p>`;
+  const end = s.steps.reduce((a, x) => Math.max(a, x.start_ms + x.ms), 1);
+  const W = 900, L = 140, R = 64, rowH = 24, top = 8, H = top + s.steps.length * rowH + 28, x = ms => L + (W - L - R) * ms / end;
+  const step = [1, 2, 5, 10, 15, 20, 30].find(v => end / 1000 / v <= 7) || 60, ticks = [];
+  for (let t = 0; t <= end / 1000 + 1e-9; t += step) ticks.push(t);
+  const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Timeline of each step in this run">
+    ${ticks.map(t => `<line class="grid" x1="${x(t * 1000)}" x2="${x(t * 1000)}" y1="${top}" y2="${H - 22}"/><text class="tick" x="${x(t * 1000)}" y="${H - 6}" text-anchor="middle">${t}s</text>`).join("")}
+    ${s.steps.map((st, k) => { const y = top + k * rowH, w = Math.max(3, x(st.start_ms + st.ms) - x(st.start_ms));
+      const tip = st.kind === "llm" ? `${stepLabel(st)}: ${fmtS(st.ms)}\n${st.tokens_in.toLocaleString()} in / ${st.tokens_out.toLocaleString()} out` : `${st.name}: ${fmtS(st.ms)}\n${st.what}\n→ ${st.result}`;
+      return `<text x="${L - 10}" y="${y + 15}" text-anchor="end">${esc(stepLabel(st))}</text><rect x="${x(st.start_ms)}" y="${y + 5}" width="${w}" height="13" rx="4" fill="${st.kind === "llm" ? "var(--mc)" : "var(--ink-2)"}" data-tip="${esc(tip)}"/>
+        <rect x="${x(st.start_ms) - 2}" y="${y}" width="${w + 4}" height="${rowH}" fill="transparent" data-tip="${esc(tip)}"/><text x="${x(st.start_ms) + w + 6}" y="${y + 15}">${fmtS(st.ms)}</text>`; }).join("")}</svg>`;
+  const llm = s.steps.filter(x => x.kind === "llm"), maxTok = Math.max(...llm.map(x => x.tokens_in + x.tokens_out), 1);
+  return `<div class="wf" style="display:grid;gap:8px"><div class="legend"><span><i style="background:var(--mc)"></i>Claude turn</span><span><i style="background:var(--ink-2)"></i>Tool call</span></div><div class="scroll-x">${svg}</div></div>
+    <div style="display:grid;gap:8px;margin-top:14px"><span class="label">Tokens per Claude turn</span><div class="legend"><span><i style="background:var(--mc)"></i>Input</span><span><i style="background:color-mix(in srgb, var(--mc) 35%, transparent)"></i>Output</span></div>
+      <div class="bars">${llm.map(st => `<div class="bar"><span class="lbl">${esc(stepLabel(st))}</span><div class="track" style="width:${Math.max(2, 100 * (st.tokens_in + st.tokens_out) / maxTok)}%">
+        <span class="seg" style="flex:${st.tokens_in};background:var(--mc)" data-tip="${esc(`Input: ${st.tokens_in.toLocaleString()} tokens`)}"></span><span class="seg" style="flex:${Math.max(st.tokens_out, 1)};background:color-mix(in srgb, var(--mc) 35%, transparent)" data-tip="${esc(`Output: ${st.tokens_out.toLocaleString()} tokens\n≈ $${st.cost.toFixed(4)}`)}"></span></div>
+        <span class="val">${fmtK(st.tokens_in + st.tokens_out)}</span></div>`).join("")}</div></div>
+    ${s.history.length > 1 ? `<details class="x" style="margin-top:14px"><summary>Run history · ${s.history.length} runs</summary><div class="scroll-x"><table class="tbl"><thead><tr><th>Run</th><th>Whole run</th><th>Searches</th><th>Claude time</th><th>Tokens</th><th>Cost</th></tr></thead><tbody>
+      ${s.history.map(h => `<tr><td class="mono">${esc(h.run)}${h.run === s.run ? ' <span class="chip accent">shown</span>' : ""}</td><td class="mono num">${fmtS(h.wall_ms)}</td>
+        <td>${h.searches ? `${fmtS(h.search_wall_ms)} · ${h.searches}${h.searches > 1 ? (h.parallel ? " parallel" : " one at a time") : ""}` : "–"}</td><td class="mono num">${fmtS(h.llm_ms)}</td><td class="mono num">${fmtK(h.tokens)}</td><td class="mono num">${usd(h.cost)}</td></tr>`).join("")}
+    </tbody></table></div></details>` : ""}`;
+}
+function stepsPanel(s) {
+  if (!s.timeline.length) return `<p class="faint small">No steps recorded.</p>`;
+  const turns = {}; s.timeline.forEach(e => (turns[e.turn] = turns[e.turn] || []).push(e));
+  return `<p class="faint small" style="margin-bottom:6px">Italic lines are Claude's reasoning summaries.</p>${Object.entries(turns).map(([t, evs]) => `<div class="turn"><span class="turn-k">Turn ${+t + 1}</span><div class="turn-body">
+    ${evs.map(e => e.type === "thinking" ? `<p class="thought">${esc(e.text.length > 700 ? e.text.slice(0, 700) + "…" : e.text)}</p>` : e.type === "text" ? `<p>${esc(e.text)}</p>`
+      : e.type === "tool" ? `<div class="call ${e.error ? "err" : ""}"><span class="nm">${esc(e.name)}</span><span>${esc(e.what)}</span><span class="res">→ ${esc(e.result)}${e.ms != null ? ` <span class="faint">(${fmtS(e.ms)})</span>` : ""}</span></div>` : `<p style="color:var(--fail)">${esc(e.text)}</p>`).join("")}</div></div>`).join("")}`;
+}
+function checksPanel(s) {
+  return `<div class="checks">${DATA.checks.map(k => { const sc = s.scores[k], was = s.original_scores[k];
+    const metrics = ["precision", "recall", "tool_calls"].filter(m => sc[m] != null).map(m => `${m.replace("_", " ")} ${sc[m]}`).join(" · ");
+    return `<div class="check"><div><h4>${CHECK_NAMES[k]}</h4><span class="faint" style="font-size:11.5px">${esc(CHECK_HELP[k])}</span></div><div>${mark(sc.pass)}</div>
+      <div>${sc.details.length ? `<ul>${sc.details.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : `<span class="faint small">No issues${metrics ? " · " + esc(metrics) : ""}.</span>`}
+      ${was ? `<div class="was">Originally ${was.pass ? "Pass" : "Fail"}${was.details.length ? ": " + esc(was.details.slice(0, 2).join("; ")) + (was.details.length > 2 ? "…" : "") : ""}. Changed by an eval fix.</div>` : ""}</div></div>`; }).join("")}</div>`;
+}
+function renderTabs() {
+  const s = M[openM].scenarios[openI];
+  const tabs = [["flights", "Flights"], ["perf", "Time & tokens"], ["steps", "Step by step"], ["reply", "Agent's reply"], ["checks", "Eval checks"]];
+  document.getElementById("tabs").innerHTML = tabs.map(([k, l]) => `<button type="button" role="tab" aria-selected="${tab === k}" data-t="${k}">${l}</button>`).join("")
+    + (s.trace_url ? `<a class="trace" href="${esc(s.trace_url)}" target="_blank" rel="noopener">Langfuse trace ↗</a>` : "");
+  document.querySelectorAll("#tabs [data-t]").forEach(b => b.addEventListener("click", () => { tab = b.dataset.t; renderTabs(); }));
+  const p = document.getElementById("tabpanel");
+  p.innerHTML = tab === "flights" ? flightsPanel(s) : tab === "perf" ? perfPanel(s) : tab === "steps" ? stepsPanel(s)
+    : tab === "reply" ? `<div class="reply">${esc(s.message || "No final answer was submitted.")}</div>` : checksPanel(s);
+  p.querySelector("[data-reset]")?.addEventListener("click", () => { filter = "all"; renderTabs(); });
+  p.querySelector("#focus-row")?.scrollIntoView({ block: "nearest" });
+}
+function openDetail(m, idOrIndex) {
+  const sc = M[m].scenarios;
+  const i = typeof idOrIndex === "number" ? (idOrIndex + sc.length) % sc.length : Math.max(0, sc.findIndex(s => s.id === idOrIndex));
+  openM = m; openI = i; filter = "all"; tab = "flights";
+  const s = sc[i];
+  const d = document.getElementById("detail");
+  d.style.setProperty("--mc", mcol(m));
+  document.getElementById("d-eyebrow").textContent = `${CORE.includes(s.id) ? "Real trip" : "Stress test"} · ${KIND[s.data] || s.data}`;
+  document.getElementById("d-title").textContent = title(s.id);
+  document.getElementById("d-desc").textContent = s.description;
+  document.getElementById("d-models").innerHTML = M.map((mm, j) => find(j, s.id) ? `<button type="button" aria-pressed="${j === m}" data-m="${j}"><span class="mdot" style="background:${mcol(j)}"></span>${esc(mm.label)}</button>` : "").join("");
+  document.querySelectorAll("#d-models [data-m]").forEach(b => b.addEventListener("click", () => openDetail(+b.dataset.m, s.id)));
+  renderStages(s); renderDiagram(s); renderTabs();
+  if (!d.open) d.showModal();
+  d.querySelector(".dlg-body").scrollTop = 0;
+}
+function tipOn(root) {
+  const tip = document.getElementById("tip");
+  root.addEventListener("mousemove", e => {
+    const t = e.target.closest?.("[data-tip]");
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.dataset.tip; tip.hidden = false;
+    tip.style.left = Math.min(e.clientX + 14, window.innerWidth - 300) + "px";
+    tip.style.top = (e.clientY + 14) + "px";
+  });
+  root.addEventListener("mouseleave", () => { tip.hidden = true; });
+}
+
+const dlg = document.getElementById("detail");
+document.getElementById("d-prev").addEventListener("click", () => openDetail(openM, openI - 1));
+document.getElementById("d-next").addEventListener("click", () => openDetail(openM, openI + 1));
+document.getElementById("d-close").addEventListener("click", () => dlg.close());
+dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+dlg.addEventListener("close", () => { document.getElementById("tip").hidden = true; });
+document.addEventListener("keydown", e => {
+  if (!dlg.open || e.target.closest("input, textarea, select")) return;
+  if (e.key === "ArrowRight") openDetail(openM, openI + 1);
+  if (e.key === "ArrowLeft") openDetail(openM, openI - 1);
+});
+tipOn(document.body); tipOn(dlg);
+// a modal's top layer paints above fixed elements, so the tooltip moves into the dialog while it's open
+new MutationObserver(() => { const tip = document.getElementById("tip"); (dlg.open ? dlg : document.body).appendChild(tip); })
+  .observe(dlg, { attributes: true, attributeFilter: ["open"] });
+
+renderHero(); renderTrips(); renderPerformance(); renderStress(); renderFindings(); renderPipeline();
+</script>

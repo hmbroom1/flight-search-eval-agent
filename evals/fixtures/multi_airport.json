@@ -1,0 +1,143 @@
+{
+  "_synthetic": true,
+  "search_metadata": {
+    "status": "Success"
+  },
+  "best_flights": [
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Austin-Bergstrom International Airport",
+            "id": "AUS",
+            "time": "2027-04-09 06:30"
+          },
+          "arrival_airport": {
+            "name": "John F. Kennedy International Airport",
+            "id": "JFK",
+            "time": "2027-04-09 11:05"
+          },
+          "duration": 215,
+          "airplane": "Airbus A321",
+          "airline": "JetBlue",
+          "travel_class": "Economy",
+          "flight_number": "B6 1284",
+          "legroom": "30 in",
+          "extensions": []
+        }
+      ],
+      "layovers": [],
+      "total_duration": 215,
+      "type": "Round trip",
+      "price": 248
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Austin-Bergstrom International Airport",
+            "id": "AUS",
+            "time": "2027-04-09 09:10"
+          },
+          "arrival_airport": {
+            "name": "Newark Liberty International Airport",
+            "id": "EWR",
+            "time": "2027-04-09 13:48"
+          },
+          "duration": 218,
+          "airplane": "Airbus A321",
+          "airline": "United",
+          "travel_class": "Economy",
+          "flight_number": "UA 2150",
+          "legroom": "30 in",
+          "extensions": []
+        }
+      ],
+      "layovers": [],
+      "total_duration": 218,
+      "type": "Round trip",
+      "price": 231
+    }
+  ],
+  "other_flights": [
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Austin-Bergstrom International Airport",
+            "id": "AUS",
+            "time": "2027-04-09 07:00"
+          },
+          "arrival_airport": {
+            "name": "Hartsfield-Jackson Atlanta International Airport",
+            "id": "ATL",
+            "time": "2027-04-09 10:10"
+          },
+          "duration": 130,
+          "airplane": "Airbus A321",
+          "airline": "Delta",
+          "travel_class": "Economy",
+          "flight_number": "DL 1167",
+          "legroom": "30 in",
+          "extensions": []
+        },
+        {
+          "departure_airport": {
+            "name": "Hartsfield-Jackson Atlanta International Airport",
+            "id": "ATL",
+            "time": "2027-04-09 11:15"
+          },
+          "arrival_airport": {
+            "name": "LaGuardia Airport",
+            "id": "LGA",
+            "time": "2027-04-09 13:30"
+          },
+          "duration": 135,
+          "airplane": "Airbus A321",
+          "airline": "Delta",
+          "travel_class": "Economy",
+          "flight_number": "DL 2544",
+          "legroom": "30 in",
+          "extensions": []
+        }
+      ],
+      "layovers": [
+        {
+          "duration": 65,
+          "name": "Hartsfield-Jackson Atlanta International Airport",
+          "id": "ATL"
+        }
+      ],
+      "total_duration": 330,
+      "type": "Round trip",
+      "price": 262
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Austin-Bergstrom International Airport",
+            "id": "AUS",
+            "time": "2027-04-09 12:05"
+          },
+          "arrival_airport": {
+            "name": "LaGuardia Airport",
+            "id": "LGA",
+            "time": "2027-04-09 16:40"
+          },
+          "duration": 215,
+          "airplane": "Airbus A321",
+          "airline": "American",
+          "travel_class": "Economy",
+          "flight_number": "AA 2980",
+          "legroom": "30 in",
+          "extensions": []
+        }
+      ],
+      "layovers": [],
+      "total_duration": 215,
+      "type": "Round trip",
+      "price": 305
+    }
+  ]
+}

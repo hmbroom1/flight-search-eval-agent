@@ -1,0 +1,168 @@
+{
+  "_synthetic": true,
+  "search_metadata": {
+    "status": "Success"
+  },
+  "best_flights": [
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Austin-Bergstrom International Airport",
+            "id": "AUS",
+            "time": "2027-03-12 06:00"
+          },
+          "arrival_airport": {
+            "name": "George Bush Intercontinental Airport",
+            "id": "IAH",
+            "time": "2027-03-12 06:55"
+          },
+          "duration": 55,
+          "airplane": "Airbus A321",
+          "airline": "United",
+          "travel_class": "Economy",
+          "flight_number": "UA 455",
+          "legroom": "30 in",
+          "extensions": []
+        },
+        {
+          "departure_airport": {
+            "name": "George Bush Intercontinental Airport",
+            "id": "IAH",
+            "time": "2027-03-12 08:10"
+          },
+          "arrival_airport": {
+            "name": "Miami International Airport",
+            "id": "MIA",
+            "time": "2027-03-12 12:40"
+          },
+          "duration": 150,
+          "airplane": "Airbus A321",
+          "airline": "United",
+          "travel_class": "Economy",
+          "flight_number": "UA 1790",
+          "legroom": "30 in",
+          "extensions": []
+        }
+      ],
+      "layovers": [
+        {
+          "duration": 75,
+          "name": "George Bush Intercontinental Airport",
+          "id": "IAH"
+        }
+      ],
+      "total_duration": 280,
+      "type": "Round trip",
+      "price": 210
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Austin-Bergstrom International Airport",
+            "id": "AUS",
+            "time": "2027-03-12 07:05"
+          },
+          "arrival_airport": {
+            "name": "Miami International Airport",
+            "id": "MIA",
+            "time": "2027-03-12 11:02"
+          },
+          "duration": 177,
+          "airplane": "Airbus A321",
+          "airline": "American",
+          "travel_class": "Economy",
+          "flight_number": "AA 1234",
+          "legroom": "30 in",
+          "extensions": []
+        }
+      ],
+      "layovers": [],
+      "total_duration": 177,
+      "type": "Round trip",
+      "price": 265
+    }
+  ],
+  "other_flights": [
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Austin-Bergstrom International Airport",
+            "id": "AUS",
+            "time": "2027-03-12 13:20"
+          },
+          "arrival_airport": {
+            "name": "Miami International Airport",
+            "id": "MIA",
+            "time": "2027-03-12 17:10"
+          },
+          "duration": 170,
+          "airplane": "Airbus A321",
+          "airline": "JetBlue",
+          "travel_class": "Economy",
+          "flight_number": "B6 918",
+          "legroom": "30 in",
+          "extensions": []
+        }
+      ],
+      "layovers": [],
+      "total_duration": 170,
+      "type": "Round trip",
+      "price": 280
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Austin-Bergstrom International Airport",
+            "id": "AUS",
+            "time": "2027-03-12 08:15"
+          },
+          "arrival_airport": {
+            "name": "Hartsfield-Jackson Atlanta International Airport",
+            "id": "ATL",
+            "time": "2027-03-12 11:30"
+          },
+          "duration": 135,
+          "airplane": "Airbus A321",
+          "airline": "Delta",
+          "travel_class": "Economy",
+          "flight_number": "DL 2210",
+          "legroom": "30 in",
+          "extensions": []
+        },
+        {
+          "departure_airport": {
+            "name": "Hartsfield-Jackson Atlanta International Airport",
+            "id": "ATL",
+            "time": "2027-03-12 12:40"
+          },
+          "arrival_airport": {
+            "name": "Miami International Airport",
+            "id": "MIA",
+            "time": "2027-03-12 14:30"
+          },
+          "duration": 110,
+          "airplane": "Airbus A321",
+          "airline": "Delta",
+          "travel_class": "Economy",
+          "flight_number": "DL 1488",
+          "legroom": "30 in",
+          "extensions": []
+        }
+      ],
+      "layovers": [
+        {
+          "duration": 70,
+          "name": "Hartsfield-Jackson Atlanta International Airport",
+          "id": "ATL"
+        }
+      ],
+      "total_duration": 315,
+      "type": "Round trip",
+      "price": 228
+    }
+  ]
+}

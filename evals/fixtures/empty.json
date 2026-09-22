@@ -1,0 +1,9 @@
+{
+  "_synthetic": true,
+  "search_metadata": {
+    "status": "Success"
+  },
+  "error": "Google Flights hasn't returned any results for this query.",
+  "best_flights": [],
+  "other_flights": []
+}

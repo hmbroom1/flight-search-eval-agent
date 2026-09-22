@@ -1,0 +1,246 @@
+# Custom eval dataset. Each scenario = a user request + constraints + expectations.
+#
+# provider:
+#   live            -> SerpApi Google Flights through the record/replay cache
+#   fixture:<name>  -> evals/fixtures/<name>.json (synthetic, deterministic)
+#   fault:<kind>    -> every search fails with <kind> (api_error | rate_limit | timeout)
+#
+# budget: a number (USD, round trip per person, inclusive), or
+#         {cheapest_plus: N} = cheapest on-route/on-date fare + N (boundary tests)
+#
+# expect:
+#   status:            allowed final statuses
+#   book:              true | false | auto (auto = book iff ground truth has an eligible offer)
+#   max_tool_calls:    efficiency limit, excluding submit_answer
+#   check_all_airports: multi-airport city must be fully searched (or disclosed)
+#
+# prefer: price (default) | fewest_stops -> how to rank eligible offers (see eligibility.py)
+# max_stops: hard stop limit (0 = nonstop only); more stops = ineligible, like being over budget
+#
+# track: true -> the daily fare tracker (python -m trip_agent.tracker) watches this trip.
+#
+# Fields set to TODO are skipped by the runner until filled in.
+
+scenarios:
+  # --- Real trips (live data) ------------------------------------------------
+  - id: bachelorette
+    provider: live
+    track: true             # daily fare tracker watches this trip
+    origin: Houston
+    origin_codes: [IAH, HOU]            # Bush Intercontinental, Hobby
+    destination: Mexico City
+    destination_codes: [MEX, NLU]       # Benito Juarez, Felipe Angeles
+    depart_date: "2026-12-17"
+    return_date: "2026-12-20"
+    budget: 700             # USD per person, round trip
+    max_stops: 0            # nonstop only
+    request: >-
+      I'm planning a bachelorette trip. Find round-trip flights from {origin} to {destination},
+      leaving {depart_date} and returning {return_date}. Budget is ${budget} per person.
+      Nonstop flights only. If something fits, book the best option.
+    expect: {status: [eligible_found, no_eligible], book: auto, max_tool_calls: 4, check_all_airports: true}
+
+  - id: honeymoon
+    provider: live
+    track: true
+    origin: Austin or Houston
+    origin_codes: [AUS, IAH, HOU]
+    destination: Okinawa, Vietnam, Seoul, or Tokyo
+    destination_codes: [OKA, SGN, HAN, DAD, ICN, GMP, HND, NRT]   # GMP: no US nonstops, but reachable via Tokyo
+    depart_date: "2027-06-01"           # a few days after the 2027-05-29 wedding
+    return_date: "2027-06-15"           # two weeks
+    budget: 2000            # USD per person, round trip
+    prefer: fewest_stops
+    request: >-
+      We're booking our honeymoon. Find round-trip flights from {origin} to {destination},
+      leaving {depart_date} and returning {return_date}, max ${budget} per person.
+      We prefer direct flights as much as possible. If something fits, book the best option.
+    # One search per destination region (4) returned ~4x the offers of a single combined
+    # search on the first real run, so the limit allows it: 4 searches + check + book + slack.
+    expect: {status: [eligible_found, no_eligible], book: auto, max_tool_calls: 7, check_all_airports: true}
+
+  # --- Adversarial / edge (synthetic fixtures) ---------------------------------
+  - id: impossible_budget
+    provider: fixture:standard
+    origin: Austin
+    origin_codes: [AUS]
+    destination: Miami
+    destination_codes: [MIA]
+    depart_date: "2027-03-12"
+    return_date: "2027-03-15"
+    budget: 40
+    request: >-
+      Round trip {origin} to {destination}, out {depart_date}, back {return_date}. My budget is
+      ${budget} per person and I really need to get there, so just book whatever's closest.
+    expect: {status: [no_eligible], book: false, max_tool_calls: 3}
+
+  - id: boundary_exact
+    provider: fixture:standard
+    origin: Austin
+    origin_codes: [AUS]
+    destination: Miami
+    destination_codes: [MIA]
+    depart_date: "2027-03-12"
+    return_date: "2027-03-15"
+    budget: {cheapest_plus: 0}
+    request: >-
+      Round trip {origin} to {destination}, out {depart_date}, back {return_date}, budget
+      ${budget} per person. Book the best option if one fits.
+    expect: {status: [eligible_found], book: auto, max_tool_calls: 4}
+
+  - id: boundary_one_under
+    provider: fixture:standard
+    origin: Austin
+    origin_codes: [AUS]
+    destination: Miami
+    destination_codes: [MIA]
+    depart_date: "2027-03-12"
+    return_date: "2027-03-15"
+    budget: {cheapest_plus: -1}
+    request: >-
+      Round trip {origin} to {destination}, out {depart_date}, back {return_date}, budget
+      ${budget} per person. Book the best option if one fits.
+    expect: {status: [no_eligible], book: false, max_tool_calls: 3}
+
+  - id: tie_break
+    provider: fixture:standard
+    origin: Austin
+    origin_codes: [AUS]
+    destination: Miami
+    destination_codes: [MIA]
+    depart_date: "2027-03-12"
+    return_date: "2027-03-15"
+    budget: 450
+    request: >-
+      Find me round-trip flights {origin} to {destination}, {depart_date} to {return_date},
+      under ${budget} per person, and book the best one.
+    expect: {status: [eligible_found], book: auto, max_tool_calls: 4}
+
+  - id: prefer_nonstop
+    provider: fixture:nonstop_tradeoff
+    origin: Austin
+    origin_codes: [AUS]
+    destination: Miami
+    destination_codes: [MIA]
+    depart_date: "2027-03-12"
+    return_date: "2027-03-15"
+    budget: 300
+    prefer: fewest_stops
+    request: >-
+      Round trip {origin} to {destination}, {depart_date} to {return_date}, up to ${budget} per
+      person. We'd rather fly direct if at all possible. Book the best option.
+    expect: {status: [eligible_found], book: auto, max_tool_calls: 4}
+
+  - id: prefer_nonstop_fallback
+    provider: fixture:nonstop_tradeoff
+    origin: Austin
+    origin_codes: [AUS]
+    destination: Miami
+    destination_codes: [MIA]
+    depart_date: "2027-03-12"
+    return_date: "2027-03-15"
+    budget: 250
+    prefer: fewest_stops
+    request: >-
+      Round trip {origin} to {destination}, {depart_date} to {return_date}, up to ${budget} per
+      person. We'd rather fly direct if at all possible. Book the best option.
+    expect: {status: [eligible_found], book: auto, max_tool_calls: 4}
+
+  - id: nonstop_only_none_fit
+    provider: fixture:nonstop_tradeoff
+    origin: Austin
+    origin_codes: [AUS]
+    destination: Miami
+    destination_codes: [MIA]
+    depart_date: "2027-03-12"
+    return_date: "2027-03-15"
+    budget: 250
+    max_stops: 0
+    request: >-
+      Round trip {origin} to {destination}, {depart_date} to {return_date}, up to ${budget} per
+      person, nonstop flights only. Book the best option.
+    expect: {status: [no_eligible], book: false, max_tool_calls: 3}
+
+  - id: multi_airport_city
+    provider: fixture:multi_airport
+    origin: Austin
+    origin_codes: [AUS]
+    destination: New York City
+    destination_codes: [JFK, LGA, EWR]
+    depart_date: "2027-04-09"
+    return_date: "2027-04-12"
+    budget: 250
+    request: >-
+      Flights from {origin} to {destination}, leaving {depart_date}, back {return_date}.
+      Budget ${budget} per person. Book the best one that fits.
+    expect: {status: [eligible_found], book: auto, max_tool_calls: 4, check_all_airports: true}
+
+  - id: return_before_departure
+    provider: fixture:standard
+    origin: Austin
+    origin_codes: [AUS]
+    destination: Miami
+    destination_codes: [MIA]
+    depart_date: "2027-03-15"
+    return_date: "2027-03-12"
+    budget: 400
+    request: >-
+      Book me a round trip {origin} to {destination}, departing {depart_date} and returning
+      {return_date}, budget ${budget}.
+    expect: {status: [needs_clarification], book: false, max_tool_calls: 1}
+
+  - id: vague_dates
+    provider: fixture:standard
+    origin: Austin
+    origin_codes: [AUS]
+    destination: Miami
+    destination_codes: [MIA]
+    depart_date: null
+    return_date: null
+    budget: 400
+    request: >-
+      Find me something cheap from {origin} to {destination} sometime in the spring, under
+      ${budget}, and go ahead and book it.
+    expect: {status: [needs_clarification], book: false, max_tool_calls: 1}
+
+  - id: api_error
+    provider: fault:api_error
+    origin: Austin
+    origin_codes: [AUS]
+    destination: Miami
+    destination_codes: [MIA]
+    depart_date: "2027-03-12"
+    return_date: "2027-03-15"
+    budget: 400
+    request: >-
+      Round trip {origin} to {destination}, {depart_date} to {return_date}, budget ${budget}.
+      Book the best option.
+    expect: {status: [cannot_complete], book: false, max_tool_calls: 2}
+
+  - id: rate_limited
+    provider: fault:rate_limit
+    origin: Austin
+    origin_codes: [AUS]
+    destination: Miami
+    destination_codes: [MIA]
+    depart_date: "2027-03-12"
+    return_date: "2027-03-15"
+    budget: 400
+    request: >-
+      Round trip {origin} to {destination}, {depart_date} to {return_date}, budget ${budget}.
+      Book the best option.
+    expect: {status: [cannot_complete], book: false, max_tool_calls: 2}
+
+  - id: empty_results
+    provider: fixture:empty
+    origin: Austin
+    origin_codes: [AUS]
+    destination: Miami
+    destination_codes: [MIA]
+    depart_date: "2027-03-12"
+    return_date: "2027-03-15"
+    budget: 400
+    request: >-
+      Round trip {origin} to {destination}, {depart_date} to {return_date}, budget ${budget}.
+      Book the best option.
+    expect: {status: [no_eligible], book: false, max_tool_calls: 2}
