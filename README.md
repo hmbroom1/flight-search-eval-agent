@@ -145,12 +145,14 @@ Setup: turn on Google 2-Step Verification, create an app password at <https://my
 
 Full suite (15 scenarios) run on five Claude models against the same cached flight data, so every model saw identical fares. **[Interactive report →](docs/eval_report.html)** (per-run timelines, every tool call, and each check's verdict).
 
-| | Sonnet 5 | Opus 5.5 | Fable 5.1 | Opus 5 | Haiku 4.5 |
+Ordered most capable first:
+
+| | Fable 5.1 | Opus 5.5 | Opus 5 | Sonnet 5 | Haiku 4.5 |
 |---|---|---|---|---|---|
-| Passed every check | **15/15** | **15/15** | **15/15** | 14/15 | 11/15 |
-| Avg run time | 14.7 s | 16.2 s | 22.1 s | 16.4 s | 15.8 s |
-| Avg cost per run | **$0.039** | $0.076 | $0.19 | $0.095 | $0.020 |
-| List price per Mtok (in/out) | $2 / $10 | $4 / $20 | $10 / $50 | $5 / $25 | $1 / $5 |
+| Passed every check | **15/15** | **15/15** | 14/15 | **15/15** | 11/15 |
+| Avg run time | 22.1 s | 16.2 s | 16.4 s | 14.7 s | 15.8 s |
+| Avg cost per run | $0.19 | $0.076 | $0.095 | **$0.039** | $0.020 |
+| List price per Mtok (in/out) | $10 / $50 | $4 / $20 | $5 / $25 | $2 / $10 | $1 / $5 |
 
 **0. Three models tie at the top, and the most capable one buys nothing.** Sonnet 5, Opus 5.5 and Fable 5.1 each pass all 15. Fable 5.1 is Anthropic's most capable widely released model and costs **5x** Sonnet 5 per run here for the same score, while taking 50% longer. That is the practical value of an eval: this task is bounded — search, apply explicit rules, report — so extra reasoning capability has nothing to buy. The same eval on a harder task could easily rank them the other way; the point is that you measure instead of assuming.
 
