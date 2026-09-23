@@ -143,17 +143,20 @@ Setup: turn on Google 2-Step Verification, create an app password at <https://my
 
 ## Findings
 
-Full suite (15 scenarios) run on three Claude models against the same cached flight data, so every model saw identical fares. **[Interactive report →](docs/eval_report.html)** (per-run timelines, every tool call, and each check's verdict).
+Full suite (15 scenarios) run on five Claude models against the same cached flight data, so every model saw identical fares. **[Interactive report →](docs/eval_report.html)** (per-run timelines, every tool call, and each check's verdict).
 
-| | Opus 5 | Sonnet 5 | Haiku 4.5 |
-|---|---|---|---|
-| Passed every check | 14/15 | **15/15** | 11/15 |
-| Avg run time | 16.4 s | 14.7 s | 15.8 s |
-| Avg cost per run | $0.095 | $0.039 | $0.020 |
+| | Sonnet 5 | Opus 5.5 | Fable 5.1 | Opus 5 | Haiku 4.5 |
+|---|---|---|---|---|---|
+| Passed every check | **15/15** | **15/15** | **15/15** | 14/15 | 11/15 |
+| Avg run time | 14.7 s | 16.2 s | 22.1 s | 16.4 s | 15.8 s |
+| Avg cost per run | **$0.039** | $0.076 | $0.19 | $0.095 | $0.020 |
+| List price per Mtok (in/out) | $2 / $10 | $4 / $20 | $10 / $50 | $5 / $25 | $1 / $5 |
+
+**0. Three models tie at the top, and the most capable one buys nothing.** Sonnet 5, Opus 5.5 and Fable 5.1 each pass all 15. Fable 5.1 is Anthropic's most capable widely released model and costs **5x** Sonnet 5 per run here for the same score, while taking 50% longer. That is the practical value of an eval: this task is bounded — search, apply explicit rules, report — so extra reasoning capability has nothing to buy. The same eval on a harder task could easily rank them the other way; the point is that you measure instead of assuming.
 
 **1. Haiku's failures were protocol failures, not bad answers.** In `return_before_departure`, `vague_dates`, and `empty_results`, Haiku wrote a sensible reply in prose but never called `submit_answer`, so there was no structured result for anything downstream to use. An eval that only read the final message would have passed all three. Only a trajectory eval catches this.
 
-**2. Opus's one failure is a known false alarm, kept on purpose.** In `impossible_budget` it said about **$290** would cover the cheapest nonstop; the real fare was $289. The grounding check flags any dollar amount it can't trace to the data. I kept it strict: a check that forgives "close enough" numbers would also forgive made-up ones.
+**2. The one Opus 5 failure is a known false alarm, kept on purpose.** In `impossible_budget` it said about **$290** would cover the cheapest nonstop; the real fare was $289. The grounding check flags any dollar amount it can't trace to the data. I kept it strict: a check that forgives "close enough" numbers would also forgive made-up ones. Notably, no other model rounded — Opus 5.5 passes the same scenario.
 
 **3. The eval was wrong before the agent was.** The first live run of `honeymoon` failed for three reasons, and all three were bugs in the eval:
 - the airport list was missing Seoul Gimpo (GMP);
@@ -169,7 +172,7 @@ All three were fixed before any results were trusted. Earlier, a planted-failure
 
 **5. The real trips.** All three models agreed on both picks: a $653 nonstop to Mexico City for the bachelorette trip, and a $1,525 nonstop Houston→Tokyo for the honeymoon.
 
-**Caveat:** this is one run per model per scenario. "Sonnet wins" needs repeated runs with variance before it's a real conclusion.
+**Caveat:** this is one run per model per scenario — 75 runs in total. A three-way tie at the top is exactly the situation where run-to-run variance matters most, so ranking the tied models needs repeated runs before it means anything. The gap down to Haiku 4.5 is large enough to be real.
 
 ## Eval concepts demonstrated
 

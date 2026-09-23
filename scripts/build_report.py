@@ -32,8 +32,10 @@ from evals.scorers import score_run  # noqa: E402
 from trip_agent.eligibility import load_scenarios  # noqa: E402
 
 # USD per token (input, output), from Anthropic's published per-million-token prices.
-PRICES = {"claude-opus-5": (5e-6, 25e-6), "claude-sonnet-5": (2e-6, 10e-6), "claude-haiku-4-5": (1e-6, 5e-6)}
-MODEL_LABELS = {"claude-opus-5": "Opus 5", "claude-sonnet-5": "Sonnet 5", "claude-haiku-4-5": "Haiku 4.5"}
+PRICES = {"claude-opus-5": (5e-6, 25e-6), "claude-opus-5-5": (4e-6, 20e-6), "claude-fable-5-1": (10e-6, 50e-6),
+          "claude-sonnet-5": (2e-6, 10e-6), "claude-haiku-4-5": (1e-6, 5e-6)}
+MODEL_LABELS = {"claude-opus-5": "Opus 5", "claude-opus-5-5": "Opus 5.5", "claude-fable-5-1": "Fable 5.1",
+                "claude-sonnet-5": "Sonnet 5", "claude-haiku-4-5": "Haiku 4.5"}
 MODEL_ORDER = list(MODEL_LABELS)
 
 

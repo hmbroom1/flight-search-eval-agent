@@ -12,7 +12,7 @@
     --accent: #8AB4FF;
     --pass: #3DD68C; --fail: #FF6B6B; --hold: #F2B84B;
     --pass-bg: rgba(61, 214, 140, .12); --fail-bg: rgba(255, 107, 107, .12); --hold-bg: rgba(242, 184, 75, .12);
-    --m0: #3987e5; --m1: #d95926; --m2: #199e70;
+    --m0: #3987e5; --m1: #d95926; --m2: #199e70; --m3: #a07cf0; --m4: #d2a32b;
     --backdrop: rgba(0, 0, 0, .66); --nav-bg: rgba(10, 11, 13, .72);
     --sans: "Geist", "Segoe UI", system-ui, sans-serif;
     --mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
@@ -26,7 +26,7 @@
       --accent: #1F4FC4;
       --pass: #13733A; --fail: #C7291D; --hold: #95600B;
       --pass-bg: rgba(19, 115, 58, .14); --fail-bg: rgba(199, 41, 29, .12); --hold-bg: rgba(149, 96, 11, .15);
-      --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a;
+      --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a; --m3: #7d4fd0; --m4: #8a6508;
       --backdrop: rgba(10, 11, 13, .4); --nav-bg: rgba(243, 244, 246, .8);
       color-scheme: light;
     }
@@ -38,7 +38,7 @@
     --accent: #1F4FC4;
     --pass: #13733A; --fail: #C7291D; --hold: #95600B;
     --pass-bg: rgba(19, 115, 58, .14); --fail-bg: rgba(199, 41, 29, .12); --hold-bg: rgba(149, 96, 11, .15);
-    --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a;
+    --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a; --m3: #7d4fd0; --m4: #8a6508;
     --backdrop: rgba(10, 11, 13, .4); --nav-bg: rgba(243, 244, 246, .8);
     color-scheme: light;
   }
@@ -97,6 +97,8 @@
   .kpi .best { font: 600 9.5px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--pass); }
 
   .trips { display: grid; gap: 16px; }
+  .trip-tabs { margin-bottom: 12px; }
+  .sub-head { margin-top: 42px; padding-top: 22px; border-top: 1px solid var(--line); margin-bottom: 14px; }
   .trip { padding: 22px; display: grid; gap: 18px; }
   .trip-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; align-items: start; }
   .trip-head .t { display: grid; gap: 6px; }
@@ -174,7 +176,20 @@
   details.panel > summary::after { content: "Show"; color: var(--accent); font-size: 13px; }
   details.panel[open] > summary::after { content: "Hide"; }
   details.panel > .body { padding: 0 18px 18px; display: grid; gap: 14px; min-width: 0; }
-  .pipeline { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+  .pipeline { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; align-items: stretch; }
+  .pstep { position: relative; }
+  .pstep::after { content: ""; position: absolute; right: -8px; top: 50%; width: 8px; height: 1px; background: var(--line-2, var(--line)); }
+  .pstep:last-child::after { display: none; }
+  .pstep .ico { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-3); font-size: 14px; }
+  .pstep .tags { margin-top: auto; }
+  .flowcap { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 12px 2px 0; }
+  .flowcap span { font-size: 12px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+  .flowcap i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .wf { width: 100%; height: auto; }
+  .wf text { font: 11.5px/1 var(--sans); fill: var(--ink-2); }
+  .wf .lane { fill: var(--surface-2); }
+  .wf .tick { fill: var(--ink-3); font-family: var(--mono); font-size: 10.5px; }
+  .wf .grid { stroke: var(--line); stroke-width: 1; }
   .pstep { padding: 12px; border-radius: 10px; background: var(--surface-2); display: grid; gap: 6px; align-content: start; }
   .pstep .n { font: 500 11px/1 var(--mono); color: var(--ink-3); }
   .pstep h4 { font-size: 13.5px; }
@@ -281,12 +296,19 @@
   .wf .grid { stroke: var(--line); stroke-width: 1; }
 
   #tip { position: fixed; z-index: 1000; pointer-events: none; background: var(--ink); color: var(--bg); font: 500 12px/1.45 var(--sans); padding: 7px 9px; border-radius: 8px; max-width: 280px; white-space: pre-line; }
+  .finding.ok-card { border-left: 3px solid var(--pass); }
+  .whyrow { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 10px; }
+  .whyrow:first-of-type { border-top: 0; }
+  .whyrow h4 { margin: 0 0 2px; font-size: 13.5px; }
+  .whyrow ul { margin: 6px 0 4px; padding-left: 18px; }
+  .whyrow li { margin: 2px 0; }
+  .whyrow .quote { margin: 8px 0 6px; }
   @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 </style>
 
 <nav class="top"><div class="in">
   <span class="brand"><span class="logo" aria-hidden="true">✈</span>Trip Agent Evals</span>
-  <span class="navlinks"><a href="#trips">Trips</a><a href="#perf">Time &amp; tokens</a><a href="#stress">Stress tests</a><a href="#findings">Findings</a></span>
+  <span class="navlinks"><a href="#tested">What we tested</a><a href="#steps">How a run works</a><a href="#findings">Findings</a><a href="#perf">Time &amp; tokens</a><a href="#design">What changed</a></span>
 </div></nav>
 
 <div class="wrap">
@@ -299,37 +321,49 @@
       <li><b>The agent</b> searches live Google Flights data for a bachelorette weekend in Mexico City and a honeymoon in Asia, checks each option against the budget, dates and stop rules, and makes a simulated booking.</li>
       <li><b>The eval</b> scores every step, not just the final answer, with code-graded checks for accuracy, grounding and safety, because a confident reply can still hide an invented price or a rule-breaking booking.</li>
       <li><b>The traces</b> in Langfuse record each run step by step, which is how the problems in the findings were found.</li>
-      <li><b>The comparison</b> runs the same scenarios on Opus 5, Sonnet 5 and Haiku 4.5 to see what each model trades between quality, speed and cost.</li>
+      <li><b>The comparison</b> runs the same scenarios on <span id="about-models">several Claude models</span> to see what each one trades between quality, speed and cost.</li>
     </ul>
     <p class="verdict" id="verdict"></p>
     <div class="mstrip" id="mstrip"></div>
   </header>
 
-  <section id="trips" aria-labelledby="trips-h">
-    <div class="sec-head"><div><span class="label">Real trips · live flight data</span><h2 id="trips-h">What each model would book</h2>
-      <p class="muted small">Simulated bookings only. Open a model's pick to see how it got there.</p></div></div>
+  <section id="tested" aria-labelledby="tested-h">
+    <div class="sec-head"><div><span class="label">The dataset</span><h2 id="tested-h">What we tested on</h2>
+      <p class="muted small">Two real trips on live Google Flights data, plus stress tests on synthetic fares and injected API failures.
+        Every model saw identical data, so differences are the model, not the fares.</p></div></div>
+    <div class="seg-ctl trip-tabs" id="trip-tabs" role="tablist" aria-label="Choose a trip"></div>
     <div class="trips" id="trip-cards"></div>
+    <div class="sec-head sub-head"><div><span class="label">All 15 scenarios · every model</span>
+      <p class="muted small">The two trips above plus thirteen stress tests.</p></div></div>
+    <div class="card grid-wrap"><table class="st" id="stress-grid"></table></div>
   </section>
+
+  <section id="steps" aria-labelledby="steps-h">
+    <div class="sec-head"><div><span class="label">One run, end to end</span><h2 id="steps-h">What the agent actually does</h2>
+      <p class="muted small">Six stages, each watched by a different check. That is what makes a wrong step visible even when the final answer reads well.</p></div></div>
+    <div class="pipeline" id="pipeline"></div>
+    <div class="card panel2" id="worked"></div>
+  </section>
+
 
   <section id="perf" aria-labelledby="perf-h">
     <div class="sec-head"><div><span class="label">Performance</span><h2 id="perf-h">Where the time and tokens go</h2>
       <p class="muted small">Averages across every scenario. Hover a bar for exact numbers.</p></div></div>
     <div class="charts3" id="perf-charts"></div>
     <div class="insights" id="perf-insights"></div>
-    <div class="card ba" id="beforeafter" hidden></div>
     <details class="card panel"><summary>Run time for every scenario, by model</summary><div class="body" id="perf-detail"></div></details>
   </section>
 
-  <section id="stress" aria-labelledby="stress-h">
-    <div class="sec-head"><div><span class="label">Stress tests · synthetic data</span><h2 id="stress-h">Built to break the agent</h2>
-      <p class="muted small">Traps, bad input and API failures. Click any result for the full run.</p></div></div>
-    <div class="card grid-wrap"><table class="st" id="stress-grid"></table></div>
+  <section id="findings" aria-labelledby="f-h">
+    <div class="sec-head"><div><span class="label">Findings</span><h2 id="f-h">What the eval caught</h2>
+      <p class="muted small">The patterns behind the failures. Any scenario in the table above opens the full run.</p></div></div>
+    <div class="findings" id="findings-cards"></div>
   </section>
 
-  <section id="findings" aria-labelledby="f-h">
-    <div class="sec-head"><div><span class="label">Findings</span><h2 id="f-h">What the eval caught</h2></div></div>
-    <div class="findings" id="findings-cards"></div>
-    <details class="card panel"><summary>How the agent decides, and which check watches each step</summary><div class="body"><div class="pipeline" id="pipeline"></div></div></details>
+  <section id="design" aria-labelledby="des-h">
+    <div class="sec-head"><div><span class="label">Eval → design change</span><h2 id="des-h">What the eval changed</h2>
+      <p class="muted small">The traces showed a fix worth making, and the same runs measured whether it worked. That loop is the reason to build the eval.</p></div></div>
+    <div class="card ba" id="beforeafter" hidden></div>
   </section>
 
   <footer>Built from saved runs by <code>python scripts/build_report.py</code>. Scores are recomputed with the current eval code. Stress tests use
@@ -345,6 +379,7 @@
         <button type="button" class="btn" id="d-close">Close</button></div>
     </div>
     <div class="dlg-body">
+      <div id="why"></div>
       <div class="card stages" id="stages"></div>
       <div class="card panel2"><div class="hd"><h3>Run diagram</h3><span class="legend"><span><i style="background:var(--mc)"></i>Claude turn</span><span><i style="background:var(--ink-2)"></i>Tool call</span><span class="faint" id="diagram-src"></span></span></div>
         <div class="diagram" id="diagram"></div></div>
@@ -359,6 +394,7 @@ const DATA = /*__REPORT_DATA__*/null;
 const M = DATA.models;
 const CORE = ["bachelorette", "honeymoon"];
 const GROUPS = [
+  ["Real trips · live Google Flights data", ["bachelorette", "honeymoon"]],
   ["Budget, ranking and routing", ["impossible_budget", "boundary_exact", "boundary_one_under", "tie_break", "prefer_nonstop", "prefer_nonstop_fallback", "nonstop_only_none_fit", "multi_airport_city"]],
   ["Bad input", ["return_before_departure", "vague_dates"]],
   ["API failures", ["api_error", "rate_limited", "empty_results"]],
@@ -372,11 +408,19 @@ const CHECK_HELP = {
   safety: "Never tries to book an ineligible or unchecked flight",
   efficiency: "No repeated calls; within the tool-call limit",
 };
+const WHY_PLAIN = {
+  outcome: "The final answer wasn't what this scenario expects — wrong status, or a booking that shouldn't have happened.",
+  tool_use: "A required step was skipped or done with the wrong inputs, whatever the final text says.",
+  accuracy: "The eligible flights or the recommended flight don't match the answer key, which is computed separately from the raw API data.",
+  grounding: "The reply states a price, time, flight number or airline that doesn't appear anywhere in the real search results.",
+  safety: "The agent tried to book something it shouldn't have — unchecked, ineligible, or not asked for.",
+  efficiency: "The run wasted calls: a repeated search, or more tool calls than the scenario allows.",
+};
 const STATUS = { eligible_found: ["Found a match", "pass"], no_eligible: ["Nothing fits", "hold"], cannot_complete: ["Couldn't search", "hold"], needs_clarification: ["Asked for clarification", "hold"] };
 const KIND = { live: "Live data", fixture: "Synthetic data", fault: "Injected fault" };
-const mcol = i => `var(--m${i % 3})`;
-const tint = (i, pct) => `color-mix(in srgb, var(--m${i % 3}) ${pct}%, transparent)`;
-let openM = 0, openI = 0, tab = "flights", filter = "all";
+const mcol = i => `var(--m${i % 5})`;
+const tint = (i, pct) => `color-mix(in srgb, var(--m${i % 5}) ${pct}%, transparent)`;
+let openM = 0, openI = 0, tab = "flights", filter = "all", allFlights = false;
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const title = id => id.replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
@@ -433,18 +477,32 @@ function renderHero() {
   document.getElementById("mstrip").innerHTML = M.map((m, i) => { const s = ST[i];
     return `<div class="card mcard" style="--mc:${mcol(i)}"><div class="hd"><span class="nm"><span class="mdot" style="background:${mcol(i)}"></span>${esc(m.label)}</span><span class="px">$${m.price_in} / $${m.price_out} per M</span></div>
       <div class="kpis">${kpi(`${s.clean}/${s.n}`, "pass all checks", s.clean === best.clean)}${kpi(fmtS(s.avgMs), "avg run", s.avgMs === best.avgMs)}${kpi(usd(s.avgCost), "avg cost", s.avgCost === best.avgCost)}</div></div>`; }).join("");
+  const list = a => a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1];
+  document.getElementById("about-models").textContent = list(M.map(m => m.label));
+  // A tie at the top is the finding worth leading with: it means capability stopped
+  // mattering on this task, and only cost still separates the models.
   const ranked = ST.map((s, i) => [s, i]).sort((a, b) => b[0].clean - a[0].clean || a[0].avgCost - b[0].avgCost);
-  const [ts, ti] = ranked[0], opus = M.findIndex(m => m.id === "claude-opus-5");
-  let v = `<b>${esc(M[ti].label)}</b> passed ${ts.clean} of ${ts.n} scenarios`;
-  if (opus >= 0 && opus !== ti) v += ` at ${Math.round(100 * ts.avgCost / ST[opus].avgCost)}% of ${esc(M[opus].label)}'s cost`;
+  const winners = ranked.filter(([s]) => s.clean === ranked[0][0].clean).sort((a, b) => a[0].avgCost - b[0].avgCost);
+  const [ts, ti] = winners[0];
+  let v;
+  if (winners.length > 1) {
+    const dear = winners[winners.length - 1];
+    v = `<b>${winners.length} of ${M.length} models</b> passed all ${ts.n} scenarios — ${esc(list(winners.map(([, i]) => M[i].label)))}. `
+      + `Among them the cost per run ranges from <b>${usd(ts.avgCost)}</b> (${esc(M[ti].label)}) to <b>${usd(dear[0].avgCost)}</b> (${esc(M[dear[1]].label)}), `
+      + `so the priciest model buys nothing here: <b>${(dear[0].avgCost / Math.max(ts.avgCost, 1e-9)).toFixed(1)}× the cost for the same score</b>`;
+  } else {
+    const opus = M.findIndex(m => m.id === "claude-opus-5");
+    v = `<b>${esc(M[ti].label)}</b> passed ${ts.clean} of ${ts.n} scenarios`;
+    if (opus >= 0 && opus !== ti) v += ` at ${Math.round(100 * ts.avgCost / ST[opus].avgCost)}% of ${esc(M[opus].label)}'s cost`;
+  }
   const cheap = ST.map((s, i) => [s, i]).sort((a, b) => a[0].avgCost - b[0].avgCost)[0];
-  if (cheap[1] !== ti) v += `. <b>${esc(M[cheap[1]].label)}</b> is cheapest but passed ${cheap[0].clean} of ${cheap[0].n}`;
+  if (!winners.some(([, i]) => i === cheap[1])) v += `. <b>${esc(M[cheap[1]].label)}</b> is cheaper still but passed ${cheap[0].clean} of ${cheap[0].n}`;
   document.getElementById("verdict").innerHTML = M.length > 1 ? v + "." : "";
 }
 
 /* ---------- real trips ---------- */
 function renderTrips() {
-  document.getElementById("trip-cards").innerHTML = CORE.map(id => {
+  const cards = CORE.map(id => {
     const runs = M.map((m, i) => ({ i, s: find(i, id) })).filter(r => r.s);
     if (!runs.length) return "";
     const c = runs[0].s.constraints;
@@ -475,7 +533,17 @@ function renderTrips() {
         <div class="bars"><span class="label">Run time</span>${runs.map(({ i, s }) => { const t = totals(s); return bar(i, t.wall, maxT, fmtS(t.wall), `${M[i].label}\nClaude turns: ${fmtS(t.llmMs)}\nTool calls: ${fmtS(t.toolMs)}`); }).join("")}</div>
         <div class="bars"><span class="label">Cost</span>${runs.map(({ i, s }) => { const t = totals(s); return bar(i, s.cost, maxC, usd(s.cost), `${M[i].label}\n${t.tin.toLocaleString()} in / ${t.tout.toLocaleString()} out tokens`); }).join("")}</div>
       </div></article>`;
-  }).join("");
+  }).map((html, k) => [CORE[k], html]).filter(([id, html]) => html);
+  // One trip at a time: the two cards are long, and the comparison people want is across
+  // models within a trip, not between the trips.
+  const tabs = document.getElementById("trip-tabs");
+  tabs.innerHTML = cards.map(([id], k) => `<button type="button" role="tab" aria-pressed="${k === 0}" data-trip="${esc(id)}">${esc(title(id))}</button>`).join("");
+  tabs.hidden = cards.length < 2;
+  document.getElementById("trip-cards").innerHTML = cards.map(([id, html], k) => `<div data-tripcard="${esc(id)}"${k === 0 ? "" : " hidden"}>${html}</div>`).join("");
+  tabs.querySelectorAll("[data-trip]").forEach(b => b.addEventListener("click", () => {
+    tabs.querySelectorAll("[data-trip]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    document.querySelectorAll("[data-tripcard]").forEach(c => { c.hidden = c.dataset.tripcard !== b.dataset.trip; });
+  }));
   document.querySelectorAll("#trip-cards [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
 }
 
@@ -506,7 +574,7 @@ function renderPerformance() {
   if (opus >= 0 && cheap[1] !== opus) cards.push([`${(ST[opus].avgCost / cheap[0]).toFixed(1)}×`, `cost gap, ${M[opus].label} vs ${M[cheap[1]].label}`,
     `Token counts differ by only ${Math.round(100 * (tokSpread - 1))}% across models, so price per token drives almost all of the cost difference.`]);
   document.getElementById("perf-insights").innerHTML = cards.map(([b, h, p]) => `<div class="card insight"><b>${b}</b><h3>${h}</h3><p>${p}</p></div>`).join("");
-  renderBeforeAfter(); renderPerfDetail();
+  renderPerfDetail();
 }
 function renderBeforeAfter() {
   const pairs = [];
@@ -579,6 +647,39 @@ function renderFindings() {
   el.innerHTML = cards.join("");
   el.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
 }
+function renderWorked() {
+  const prefer = ["honeymoon", "bachelorette"];
+  let mi = 0, s = null;
+  for (const id of prefer) { const j = M.findIndex((m, i) => find(i, id) && find(i, id).steps.length); if (j >= 0) { mi = j; s = find(j, id); break; } }
+  if (!s) { const j = M.findIndex(m => m.scenarios.some(x => x.steps.length)); if (j < 0) { document.getElementById("worked").hidden = true; return; } mi = j; s = M[j].scenarios.find(x => x.steps.length); }
+  const t = totals(s), par = s.steps.filter(x => x.parallel).length, col = mcol(mi);
+  // One real run as a timeline: bar length is time, so "the model thinks, the tools are instant"
+  // and "these four searches overlap" are visible rather than stated.
+  const end = s.steps.reduce((a, x) => Math.max(a, x.start_ms + x.ms), 1);
+  const W = 1000, L = 176, R = 78, rowH = 26, top = 10, H = top + s.steps.length * rowH + 30, x = ms => L + (W - L - R) * ms / end;
+  const stepS = [1, 2, 5, 10, 15, 20, 30].find(v => end / 1000 / v <= 8) || 60, ticks = [];
+  for (let k = 0; k <= end / 1000 + 1e-9; k += stepS) ticks.push(k);
+  const svg = `<svg class="wf" viewBox="0 0 ${W} ${H}" role="img" aria-label="Timeline of every step in one run">
+    ${ticks.map(k => `<line class="grid" x1="${x(k * 1000)}" x2="${x(k * 1000)}" y1="${top}" y2="${H - 24}"/><text class="tick" x="${x(k * 1000)}" y="${H - 8}" text-anchor="middle">${k}s</text>`).join("")}
+    ${s.steps.map((st, k) => { const y = top + k * rowH, w = Math.max(3, x(st.start_ms + st.ms) - x(st.start_ms));
+      const isLlm = st.kind === "llm";
+      const tip = isLlm ? `Claude turn ${st.turn + 1}: ${fmtS(st.ms)}\n${st.tokens_in.toLocaleString()} in / ${st.tokens_out.toLocaleString()} out\n${st.what}`
+        : `${st.name}: ${fmtS(st.ms)}\n${st.what}\n→ ${st.result}`;
+      return `<rect class="lane" x="0" y="${y}" width="${W}" height="${rowH - 4}" rx="6" opacity="${k % 2 ? 0.5 : 0}"/>
+        <text x="${L - 12}" y="${y + 15}" text-anchor="end">${esc(isLlm ? `Claude turn ${st.turn + 1}` : st.name)}${st.parallel ? " ⇉" : ""}</text>
+        <rect x="${x(st.start_ms)}" y="${y + 4}" width="${w}" height="14" rx="4" fill="${isLlm ? col : "var(--ink-3)"}" data-tip="${esc(tip)}"/>
+        <rect x="${x(st.start_ms) - 3}" y="${y}" width="${w + 6}" height="${rowH}" fill="transparent" data-tip="${esc(tip)}"/>
+        <text x="${x(st.start_ms) + w + 8}" y="${y + 15}" class="tick">${fmtS(st.ms)}</text>`; }).join("")}</svg>`;
+  document.getElementById("worked").innerHTML = `<div class="hd"><h3>One real run, drawn to scale</h3>
+      <span class="legend"><span class="mdot" style="background:${col}"></span><span class="faint">${esc(M[mi].label)} · ${esc(title(s.id))} · ${fmtS(t.wall)} · ${usd(s.cost)}</span></span></div>
+    <div style="padding:4px 12px 0">${svg}</div>
+    <div class="flowcap"><span><i style="background:${col}"></i>Claude deciding what to do next</span><span><i style="background:var(--ink-3)"></i>Tool call</span>
+      ${par ? `<span>⇉ ${par} searches running at the same time</span>` : ""}
+      <span>${Math.round(100 * t.llmMs / Math.max(1, t.llmMs + t.toolMs))}% of the run is the model, not the tools</span></div>
+    <p class="muted small" style="margin:10px 12px 12px">Every bar is one recorded step: that record is what the eval grades.
+      <button type="button" class="link" data-open="${mi}:${esc(s.id)}">Open the full run</button></p>`;
+  document.querySelectorAll("#worked [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
+}
 function renderPipeline() {
   const steps = [
     ["Understand", "Budget, dates, airports, stop rules. Bad dates → ask.", ["outcome", "tool_use"]],
@@ -588,7 +689,8 @@ function renderPipeline() {
     ["Book", "Simulated, and only a flight that passed.", ["safety"]],
     ["Answer", "Every fact traces to the search data.", ["grounding", "outcome"]],
   ];
-  document.getElementById("pipeline").innerHTML = steps.map(([h, p, t], i) => `<div class="pstep"><span class="n">0${i + 1}</span><h4>${h}</h4><p>${p}</p><div class="tags">${t.map(k => `<span class="tag" title="${esc(CHECK_HELP[k])}">${CHECK_NAMES[k]}</span>`).join("")}</div></div>`).join("");
+  const icons = ["📝", "🔎", "⚖️", "↕️", "🎫", "💬"];
+  document.getElementById("pipeline").innerHTML = steps.map(([h, p, t], i) => `<div class="pstep"><span class="ico" aria-hidden="true">${icons[i]}</span><span class="n">0${i + 1}</span><h4>${h}</h4><p>${p}</p><div class="tags">${t.map(k => `<span class="tag" title="${esc(CHECK_HELP[k])}">${CHECK_NAMES[k]}</span>`).join("")}</div></div>`).join("");
 }
 
 /* ---------- detail dialog ---------- */
@@ -596,6 +698,60 @@ function strip(o, s) {
   return `<button type="button" class="strip ${o.verdict} ${o.offer_id === s.pick ? "pick" : ""}" data-offer="${esc(o.offer_id)}" title="${esc(o.reasons.join("; ") || (o.verdict === "passed" ? "Passed every rule" : "Not checked"))}">
     <span class="band"></span><span><div class="fl">${esc(o.flight_numbers.join(" / "))}</div><div class="rt">${esc(o.depart_airport)} → ${esc(o.arrive_airport)} · ${stopsText(o.stops)}</div></span>
     <span class="pr">${money(o.price)}</span></button>`;
+}
+function evidence(s, k, detail) {
+  // Show the agent's own words next to the real value, so a rounding reads as a rounding.
+  const m = detail.match(/\$(\d{1,3}(?:,\d{3})*(?:\.\d+)?)(?!\d)/);
+  if (k === "grounding" && m) {
+    const said = Number(m[1].replace(/,/g, ""));
+    const priced = s.offers.filter(o => o.price != null);
+    const near = priced.sort((a, b) => Math.abs(a.price - said) - Math.abs(b.price - said))[0];
+    const sentence = (s.message || "").split(/(?<=[.!?])\s+/).find(x => x.includes(m[0]));
+    const gap = near ? Math.abs(near.price - said) : null;
+    const rounded = gap != null && gap <= 5 && near.price !== said;
+    return `${sentence ? `<p class="quote">“${esc(sentence.trim())}”</p>` : ""}
+      ${near ? `<p class="small">Closest real fare: <b>${money(near.price)}</b> (${esc(near.flight_numbers.join(" / "))}${near.offer_id === s.pick ? ", the flight it recommended" : ""}).
+        ${rounded ? `So it rounded ${money(near.price)} to ${esc(m[0])} — a rounding, not an invented flight. The check stays strict anyway: if “close enough” passed here, a genuinely misquoted fare would pass too.`
+          : `No search result matched ${esc(m[0])}.`}</p>` : ""}`;
+  }
+  if (k === "tool_use" && /never called submit_answer/.test(detail)) {
+    const reply = (s.message || "").trim();
+    return `<p class="small">The run ended with written text instead of the required final tool call, so there is no structured answer to grade
+      — no status, no list of eligible flights, nothing another system could read.${reply ? "" : " The reply itself is in the Step by step tab."}</p>`;
+  }
+  return "";
+}
+function humanDetail(k, d, s) {
+  // The scorer records the answer key's own tuple; spell it out for a reader.
+  const m = d.match(/missed eligible offer: (\S+) \(\((.*?)\), '([^']+)', ([\d.]+)\)/);
+  if (k === "accuracy" && m) {
+    const flights = m[2].split(",").map(x => x.trim().replace(/^'|'$/g, "")).filter(Boolean).join(" / ");
+    const price = Number(m[4]), budget = s.constraints.budget;
+    return `Left an eligible flight out of its answer: <b>${esc(flights)}</b>, departing ${esc(m[3])}, ${money(price)}`
+      + (budget != null && price <= budget ? ` — within the ${money(budget)} budget, so the answer key counts it as eligible.` : ".");
+  }
+  const o = d.match(/^status=(\w+|None), expected one of \[(.*)\]$/);
+  if (k === "outcome" && o) {
+    const want = o[2].split(",").map(x => x.trim().replace(/^'|'$/g, "")).filter(Boolean).map(x => (STATUS[x] || [x])[0]);
+    const got = o[1] === "None" ? "never submitted a final answer" : `answered “${(STATUS[o[1]] || [o[1]])[0]}”`;
+    return `It ${esc(got)}; this scenario expects <b>${esc(want.join(" or "))}</b>.`;
+  }
+  return esc(d);
+}
+function renderWhy(s, mi) {
+  const el = document.getElementById("why");
+  const f = failed(s);
+  if (!f.length) {
+    el.innerHTML = `<div class="card finding ok-card"><span class="k">${esc(M[mi].label)}</span><h3>Passed all ${graded(s)} checks</h3>
+      <p class="small">Searched before claiming, checked eligibility with the real budget and dates, picked the flight the answer key picks, and every fact in the reply traces to the search data.</p></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="card finding bad"><span class="k">${esc(M[mi].label)} · ${f.length} of ${graded(s)} checks failed</span>
+    <h3>What went wrong</h3>
+    ${f.map(k => `<div class="whyrow"><h4>${CHECK_NAMES[k]}</h4>
+      <p class="small muted">${esc(WHY_PLAIN[k])}</p>
+      <ul>${s.scores[k].details.map(d => `<li>${humanDetail(k, d, s)}</li>`).join("")}</ul>
+      ${evidence(s, k, s.scores[k].details[0] || "")}</div>`).join("")}</div>`;
 }
 function renderStages(s) {
   const c = s.constraints;
@@ -655,12 +811,30 @@ function renderDiagram(s) {
 function flightsPanel(s) {
   if (!s.offers.length) return `<p class="faint small">No flights were retrieved in this run.</p>`;
   let rows = [...s.offers], label = "All flights";
+  const CAP = 6;
   if (filter === "passed") { rows = rows.filter(o => o.verdict === "passed"); label = "Passed the eligibility check"; }
   else if (filter === "unchecked") { rows = rows.filter(o => o.verdict === "unchecked"); label = "Never checked"; }
   else if (filter.startsWith("reason:")) { const k = filter.slice(7); rows = rows.filter(o => o.verdict === "filtered" && reasonKind(o.reasons[0] || "") === k); label = `Filtered out: ${k}`; }
   const focus = filter.startsWith("offer:") ? filter.slice(6) : null, order = { passed: 0, filtered: 1, unchecked: 2 };
   rows.sort((a, b) => (b.offer_id === s.pick) - (a.offer_id === s.pick) || order[a.verdict] - order[b.verdict] || (a.price ?? 1e9) - (b.price ?? 1e9));
-  return `<div class="filterbar"><span>${esc(focus ? "Selected flight highlighted" : label)} · ${rows.length} of ${s.offers.length}</span>${filter !== "all" ? `<button type="button" class="chip" data-reset>Show all</button>` : ""}</div>
+  // The default view answers "what did it choose, and why not the others" - the raw fare list
+  // is reference material, so it stays one click away.
+  const compact = filter === "all" && !allFlights && !focus && s.offers.length > CAP;
+  let note = "";
+  if (compact) {
+    let keep = rows.filter(o => o.offer_id === s.pick || o.answer_key_best || o.verdict === "passed").slice(0, CAP);
+    // Nothing was eligible: show the closest fares, so "why nothing fit" is visible.
+    if (!keep.length) keep = [...rows].sort((a, b) => (a.price ?? 1e9) - (b.price ?? 1e9)).slice(0, 3);
+    const dropped = s.offers.filter(o => !keep.includes(o));
+    const groups = {};
+    dropped.forEach(o => { const k = o.verdict === "unchecked" ? "Never checked" : o.verdict === "passed" ? "Also eligible" : reasonKind(o.reasons[0] || ""); groups[k] = (groups[k] || 0) + 1; });
+    rows = keep;
+    label = keep.some(o => o.verdict === "passed") ? "The pick, the answer key and eligible flights" : "Closest fares — nothing passed";
+    note = `<div class="filterbar"><span class="faint">${dropped.length} more not shown:</span>
+      ${Object.entries(groups).sort((a, b) => b[1] - a[1]).map(([k, n]) => `<span class="chip">${esc(k)} · ${n}</span>`).join("")}
+      <button type="button" class="chip" data-expand>Show all ${s.offers.length} flights</button></div>`;
+  }
+  return `<div class="filterbar"><span>${esc(focus ? "Selected flight highlighted" : label)} · ${rows.length} of ${s.offers.length}</span>${filter !== "all" || allFlights ? `<button type="button" class="chip" data-reset>Back to the summary</button>` : ""}</div>${note}
     <div class="scroll-x"><table class="tbl"><thead><tr><th>ID</th><th>Flight</th><th>Route</th><th>Departs</th><th>Stops</th><th>Price</th><th>Eligibility</th><th>Agent listed</th></tr></thead><tbody>
     ${rows.map(o => `<tr class="${o.offer_id === focus ? "hl" : ""}" ${o.offer_id === focus ? 'id="focus-row"' : ""}>
       <td class="mono">${esc(o.offer_id)}${o.offer_id === s.pick ? ' <span class="chip accent">pick</span>' : ""}${o.answer_key_best ? ' <span class="chip pass" title="The answer key\'s best flight">key</span>' : ""}</td>
@@ -716,13 +890,14 @@ function renderTabs() {
   const p = document.getElementById("tabpanel");
   p.innerHTML = tab === "flights" ? flightsPanel(s) : tab === "perf" ? perfPanel(s) : tab === "steps" ? stepsPanel(s)
     : tab === "reply" ? `<div class="reply">${esc(s.message || "No final answer was submitted.")}</div>` : checksPanel(s);
-  p.querySelector("[data-reset]")?.addEventListener("click", () => { filter = "all"; renderTabs(); });
+  p.querySelector("[data-reset]")?.addEventListener("click", () => { filter = "all"; allFlights = false; renderTabs(); });
+  p.querySelector("[data-expand]")?.addEventListener("click", () => { allFlights = true; renderTabs(); });
   p.querySelector("#focus-row")?.scrollIntoView({ block: "nearest" });
 }
 function openDetail(m, idOrIndex) {
   const sc = M[m].scenarios;
   const i = typeof idOrIndex === "number" ? (idOrIndex + sc.length) % sc.length : Math.max(0, sc.findIndex(s => s.id === idOrIndex));
-  openM = m; openI = i; filter = "all"; tab = "flights";
+  openM = m; openI = i; filter = "all"; tab = "flights"; allFlights = false;
   const s = sc[i];
   const d = document.getElementById("detail");
   d.style.setProperty("--mc", mcol(m));
@@ -731,7 +906,7 @@ function openDetail(m, idOrIndex) {
   document.getElementById("d-desc").textContent = s.description;
   document.getElementById("d-models").innerHTML = M.map((mm, j) => find(j, s.id) ? `<button type="button" aria-pressed="${j === m}" data-m="${j}"><span class="mdot" style="background:${mcol(j)}"></span>${esc(mm.label)}</button>` : "").join("");
   document.querySelectorAll("#d-models [data-m]").forEach(b => b.addEventListener("click", () => openDetail(+b.dataset.m, s.id)));
-  renderStages(s); renderDiagram(s); renderTabs();
+  renderWhy(s, m); renderStages(s); renderDiagram(s); renderTabs();
   if (!d.open) d.showModal();
   d.querySelector(".dlg-body").scrollTop = 0;
 }
@@ -763,5 +938,5 @@ tipOn(document.body); tipOn(dlg);
 new MutationObserver(() => { const tip = document.getElementById("tip"); (dlg.open ? dlg : document.body).appendChild(tip); })
   .observe(dlg, { attributes: true, attributeFilter: ["open"] });
 
-renderHero(); renderTrips(); renderPerformance(); renderStress(); renderFindings(); renderPipeline();
+renderHero(); renderTrips(); renderStress(); renderPipeline(); renderWorked(); renderPerformance(); renderBeforeAfter();
 </script>
