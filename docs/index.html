@@ -6,7 +6,7 @@
 </head>
 <body>
 <title>Trip Agent Evals</title>
-<meta name="description" content="Opus 5, Sonnet 5 and Haiku 4.5 on the same flight-search agent: real trips, stress tests, time and tokens.">
+<meta name="description" content="Five Claude models on the same flight-search agent: real trips, stress tests, time and tokens.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
@@ -368,7 +368,7 @@
   </section>
 
   <footer>Built from saved runs by <code>python scripts/build_report.py</code>. Scores are recomputed with the current eval code. Stress tests use
-    synthetic fares; real trips use Google Flights data via SerpApi, and all three models saw identical results. Costs use list prices. No real bookings are made.</footer>
+    synthetic fares; real trips use Google Flights data via SerpApi, and every model saw identical results. Costs use list prices. No real bookings are made.</footer>
 </div>
 
 <dialog id="detail" aria-labelledby="d-title">
@@ -620,6 +620,46 @@ function renderStress() {
   document.querySelectorAll("#stress-grid [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
 }
 
+function renderWorked() {
+  const prefer = ["honeymoon", "bachelorette"];
+  const toolMs = x => x.steps.filter(st => st.kind === "tool").reduce((a, st) => Math.max(a, st.ms || 0), 0);
+  let mi = 0, s = null;
+  for (const id of prefer) {
+    // Prefer a run whose searches were fetched live: cached runs return in milliseconds, which
+    // hides both the parallel overlap and the share of time the tools actually take.
+    const runs = M.map((m, i) => [i, find(i, id)]).filter(([, x]) => x && x.steps.length);
+    const best = runs.filter(([, x]) => toolMs(x) > 1000).sort((a, b) => toolMs(b[1]) - toolMs(a[1]))[0] || runs[0];
+    if (best) { mi = best[0]; s = best[1]; break; }
+  }
+  if (!s) { const j = M.findIndex(m => m.scenarios.some(x => x.steps.length)); if (j < 0) { document.getElementById("worked").hidden = true; return; } mi = j; s = M[j].scenarios.find(x => x.steps.length); }
+  const t = totals(s), par = s.steps.filter(x => x.parallel).length, col = mcol(mi);
+  // One real run as a timeline: bar length is time, so "the model thinks, the tools are instant"
+  // and "these four searches overlap" are visible rather than stated.
+  const end = s.steps.reduce((a, x) => Math.max(a, x.start_ms + x.ms), 1);
+  const W = 1000, L = 176, R = 78, rowH = 26, top = 10, H = top + s.steps.length * rowH + 30, x = ms => L + (W - L - R) * ms / end;
+  const stepS = [1, 2, 5, 10, 15, 20, 30].find(v => end / 1000 / v <= 8) || 60, ticks = [];
+  for (let k = 0; k <= end / 1000 + 1e-9; k += stepS) ticks.push(k);
+  const svg = `<svg class="wf" viewBox="0 0 ${W} ${H}" role="img" aria-label="Timeline of every step in one run">
+    ${ticks.map(k => `<line class="grid" x1="${x(k * 1000)}" x2="${x(k * 1000)}" y1="${top}" y2="${H - 24}"/><text class="tick" x="${x(k * 1000)}" y="${H - 8}" text-anchor="middle">${k}s</text>`).join("")}
+    ${s.steps.map((st, k) => { const y = top + k * rowH, w = Math.max(3, x(st.start_ms + st.ms) - x(st.start_ms));
+      const isLlm = st.kind === "llm";
+      const tip = isLlm ? `Claude turn ${st.turn + 1}: ${fmtS(st.ms)}\\n${st.tokens_in.toLocaleString()} in / ${st.tokens_out.toLocaleString()} out\\n${st.what}`
+        : `${st.name}: ${fmtS(st.ms)}\\n${st.what}\\n→ ${st.result}`;
+      return `<rect class="lane" x="0" y="${y}" width="${W}" height="${rowH - 4}" rx="6" opacity="${k % 2 ? 0.5 : 0}"/>
+        <text x="${L - 12}" y="${y + 15}" text-anchor="end">${esc(isLlm ? `Claude turn ${st.turn + 1}` : st.name)}${st.parallel ? " ⇉" : ""}</text>
+        <rect x="${x(st.start_ms)}" y="${y + 4}" width="${w}" height="14" rx="4" fill="${isLlm ? col : "var(--ink-3)"}" data-tip="${esc(tip)}"/>
+        <rect x="${x(st.start_ms) - 3}" y="${y}" width="${w + 6}" height="${rowH}" fill="transparent" data-tip="${esc(tip)}"/>
+        <text x="${x(st.start_ms) + w + 8}" y="${y + 15}" class="tick">${fmtS(st.ms)}</text>`; }).join("")}</svg>`;
+  document.getElementById("worked").innerHTML = `<div class="hd"><h3>One real run, drawn to scale</h3>
+      <span class="legend"><span class="mdot" style="background:${col}"></span><span class="faint">${esc(M[mi].label)} · ${esc(title(s.id))} · ${fmtS(t.wall)} · ${usd(s.cost)}</span></span></div>
+    <div style="padding:4px 12px 0">${svg}</div>
+    <div class="flowcap"><span><i style="background:${col}"></i>Claude deciding what to do next</span><span><i style="background:var(--ink-3)"></i>Tool call</span>
+      ${par ? `<span>⇉ ${par} searches running at the same time</span>` : ""}
+      <span>${Math.round(100 * t.llmMs / Math.max(1, t.llmMs + t.toolMs))}% of the run is the model, not the tools</span></div>
+    <p class="muted small" style="margin:10px 12px 12px">Every bar is one recorded step: that record is what the eval grades.
+      <button type="button" class="link" data-open="${mi}:${esc(s.id)}">Open the full run</button></p>`;
+  document.querySelectorAll("#worked [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
+}
 function renderPipeline() {
   const steps = [
     ["Understand", "Budget, dates, airports, stop rules. Bad dates → ask.", ["outcome", "tool_use"]],
@@ -878,7 +918,9 @@ tipOn(document.body); tipOn(dlg);
 new MutationObserver(() => { const tip = document.getElementById("tip"); (dlg.open ? dlg : document.body).appendChild(tip); })
   .observe(dlg, { attributes: true, attributeFilter: ["open"] });
 
-renderHero(); renderTrips(); renderStress(); renderPipeline(); renderWorked(); renderPerformance(); renderBeforeAfter();
+// Each section renders independently: one failure must not take the rest of the page with it.
+[renderHero, renderTrips, renderStress, renderPipeline, renderWorked, renderPerformance, renderBeforeAfter]
+  .forEach(fn => { try { fn(); } catch (e) { console.error(fn.name + " failed", e); } });
 </script>
 
 </body>
