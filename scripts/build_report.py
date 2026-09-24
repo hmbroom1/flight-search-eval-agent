@@ -1,6 +1,6 @@
 """Build the interactive eval report from saved runs.
 
-    python scripts/build_report.py   # -> docs/eval_report.html (open in a browser)
+    python scripts/build_report.py   # -> docs/index.html (open in a browser; GitHub Pages serves it)
                                      #    docs/eval_report.artifact.html (publish as the artifact)
 
 Takes the latest run of each scenario from runs/, re-scores it with the current
@@ -310,7 +310,7 @@ def main():
     template = (ROOT / "scripts" / "report_template.html").read_text(encoding="utf-8")
     payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     page = template.replace("/*__REPORT_DATA__*/null", payload)
-    out = ROOT / "docs" / "eval_report.html"
+    out = ROOT / "docs" / "index.html"
     out.parent.mkdir(exist_ok=True)
     # Standalone document for opening in any browser (without a doctype and charset a browser
     # falls back to quirks mode and may misread the UTF-8 symbols).
