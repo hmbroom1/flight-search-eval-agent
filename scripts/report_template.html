@@ -308,7 +308,7 @@
 
 <nav class="top"><div class="in">
   <span class="brand"><span class="logo" aria-hidden="true">✈</span>Trip Agent Evals</span>
-  <span class="navlinks"><a href="#tested">What we tested</a><a href="#steps">How a run works</a><a href="#findings">Findings</a><a href="#perf">Time &amp; tokens</a><a href="#design">What changed</a></span>
+  <span class="navlinks"><a href="#tested">What we tested</a><a href="#steps">How a run works</a><a href="#perf">Time &amp; tokens</a><a href="#design">What changed</a></span>
 </div></nav>
 
 <div class="wrap">
@@ -352,12 +352,6 @@
     <div class="charts3" id="perf-charts"></div>
     <div class="insights" id="perf-insights"></div>
     <details class="card panel"><summary>Run time for every scenario, by model</summary><div class="body" id="perf-detail"></div></details>
-  </section>
-
-  <section id="findings" aria-labelledby="f-h">
-    <div class="sec-head"><div><span class="label">Findings</span><h2 id="f-h">What the eval caught</h2>
-      <p class="muted small">The patterns behind the failures. Any scenario in the table above opens the full run.</p></div></div>
-    <div class="findings" id="findings-cards"></div>
   </section>
 
   <section id="design" aria-labelledby="des-h">
@@ -619,67 +613,6 @@ function renderStress() {
   document.querySelectorAll("#stress-grid [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
 }
 
-/* ---------- findings ---------- */
-function renderFindings() {
-  const link = (m, id, label) => `<button type="button" class="link" data-open="${m}:${esc(id)}">${esc(label || title(id))}</button>`;
-  const cards = [];
-  const ids = [...new Set(M.flatMap(m => m.scenarios.map(s => s.id)))];
-  const diffs = ids.filter(id => new Set(M.map((m, i) => { const s = find(i, id); return s ? passesAll(s) : null; })).size > 1);
-  if (M.length > 1) cards.push(`<div class="card finding info"><span class="k">Model comparison</span><h3>Where the models disagree</h3>
-    <ul>${diffs.length ? diffs.map(id => `<li><b>${esc(title(id))}</b>: ${M.map((m, i) => { const s = find(i, id); return s && !passesAll(s) ? `${link(i, id, m.label)} fails ${esc(failed(s).map(k => CHECK_NAMES[k]).join(", "))}` : ""; }).filter(Boolean).join("; ")}</li>`).join("") : "<li>No differences: every model gets the same result on every scenario.</li>"}</ul></div>`);
-  M.forEach((m, i) => {
-    const prose = m.scenarios.filter(s => (s.scores.tool_use.details || []).some(d => /never called submit_answer/.test(d)));
-    if (prose.length) cards.push(`<div class="card finding bad"><span class="k">${esc(m.label)}</span><h3>Right idea, wrong format</h3>
-      <p>In ${prose.length} scenario${prose.length > 1 ? "s" : ""} it answered in prose instead of calling the required final tool. The text reads fine to a person, but nothing downstream can use it. Only a trajectory-level eval catches this.</p>
-      <details class="x"><summary>See the runs</summary><ul>${prose.map(s => `<li>${link(i, s.id)}</li>`).join("")}</ul></details></div>`);
-  });
-  const corrected = M.flatMap((m, i) => m.scenarios.filter(s => s.corrected_ever).map(s => [i, s.id]));
-  if (corrected.length) cards.push(`<div class="card finding warn"><span class="k">Eval quality</span><h3>On real data, the eval was wrong first</h3>
-    <p>The first live ${link(corrected[0][0], corrected[0][1], title(corrected[0][1]))} run "failed". Reading the trajectory showed three eval bugs, not agent mistakes.</p>
-    <details class="x"><summary>The three bugs</summary><ul><li><b>Mislabeled answer key:</b> Seoul Gimpo was missing from the airport list.</li>
-      <li><b>Unfair reference search:</b> flights only the eval's own query returned were counted as agent misses.</li>
-      <li><b>Mis-set threshold:</b> splitting searches by country cost one extra call but returned 59 flights instead of 15.</li></ul></details></div>`);
-  const grounding = M.flatMap((m, i) => m.scenarios.filter(s => s.scores.grounding.pass === false).map(s => [i, s]));
-  if (grounding.length) cards.push(`<div class="card finding warn"><span class="k">Strict by design</span><h3>A rounded number counts as invented</h3>
-    <p>${grounding.map(([i, s]) => `${link(i, s.id, M[i].label + ", " + title(s.id))}: ${esc(s.scores.grounding.details[0] || "")}`).join("<br>")}</p>
-    <p>Allowing "close" numbers would also let a misquoted fare through, so one false alarm is the accepted cost.</p></div>`);
-  const el = document.getElementById("findings-cards");
-  el.innerHTML = cards.join("");
-  el.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
-}
-function renderWorked() {
-  const prefer = ["honeymoon", "bachelorette"];
-  let mi = 0, s = null;
-  for (const id of prefer) { const j = M.findIndex((m, i) => find(i, id) && find(i, id).steps.length); if (j >= 0) { mi = j; s = find(j, id); break; } }
-  if (!s) { const j = M.findIndex(m => m.scenarios.some(x => x.steps.length)); if (j < 0) { document.getElementById("worked").hidden = true; return; } mi = j; s = M[j].scenarios.find(x => x.steps.length); }
-  const t = totals(s), par = s.steps.filter(x => x.parallel).length, col = mcol(mi);
-  // One real run as a timeline: bar length is time, so "the model thinks, the tools are instant"
-  // and "these four searches overlap" are visible rather than stated.
-  const end = s.steps.reduce((a, x) => Math.max(a, x.start_ms + x.ms), 1);
-  const W = 1000, L = 176, R = 78, rowH = 26, top = 10, H = top + s.steps.length * rowH + 30, x = ms => L + (W - L - R) * ms / end;
-  const stepS = [1, 2, 5, 10, 15, 20, 30].find(v => end / 1000 / v <= 8) || 60, ticks = [];
-  for (let k = 0; k <= end / 1000 + 1e-9; k += stepS) ticks.push(k);
-  const svg = `<svg class="wf" viewBox="0 0 ${W} ${H}" role="img" aria-label="Timeline of every step in one run">
-    ${ticks.map(k => `<line class="grid" x1="${x(k * 1000)}" x2="${x(k * 1000)}" y1="${top}" y2="${H - 24}"/><text class="tick" x="${x(k * 1000)}" y="${H - 8}" text-anchor="middle">${k}s</text>`).join("")}
-    ${s.steps.map((st, k) => { const y = top + k * rowH, w = Math.max(3, x(st.start_ms + st.ms) - x(st.start_ms));
-      const isLlm = st.kind === "llm";
-      const tip = isLlm ? `Claude turn ${st.turn + 1}: ${fmtS(st.ms)}\n${st.tokens_in.toLocaleString()} in / ${st.tokens_out.toLocaleString()} out\n${st.what}`
-        : `${st.name}: ${fmtS(st.ms)}\n${st.what}\n→ ${st.result}`;
-      return `<rect class="lane" x="0" y="${y}" width="${W}" height="${rowH - 4}" rx="6" opacity="${k % 2 ? 0.5 : 0}"/>
-        <text x="${L - 12}" y="${y + 15}" text-anchor="end">${esc(isLlm ? `Claude turn ${st.turn + 1}` : st.name)}${st.parallel ? " ⇉" : ""}</text>
-        <rect x="${x(st.start_ms)}" y="${y + 4}" width="${w}" height="14" rx="4" fill="${isLlm ? col : "var(--ink-3)"}" data-tip="${esc(tip)}"/>
-        <rect x="${x(st.start_ms) - 3}" y="${y}" width="${w + 6}" height="${rowH}" fill="transparent" data-tip="${esc(tip)}"/>
-        <text x="${x(st.start_ms) + w + 8}" y="${y + 15}" class="tick">${fmtS(st.ms)}</text>`; }).join("")}</svg>`;
-  document.getElementById("worked").innerHTML = `<div class="hd"><h3>One real run, drawn to scale</h3>
-      <span class="legend"><span class="mdot" style="background:${col}"></span><span class="faint">${esc(M[mi].label)} · ${esc(title(s.id))} · ${fmtS(t.wall)} · ${usd(s.cost)}</span></span></div>
-    <div style="padding:4px 12px 0">${svg}</div>
-    <div class="flowcap"><span><i style="background:${col}"></i>Claude deciding what to do next</span><span><i style="background:var(--ink-3)"></i>Tool call</span>
-      ${par ? `<span>⇉ ${par} searches running at the same time</span>` : ""}
-      <span>${Math.round(100 * t.llmMs / Math.max(1, t.llmMs + t.toolMs))}% of the run is the model, not the tools</span></div>
-    <p class="muted small" style="margin:10px 12px 12px">Every bar is one recorded step: that record is what the eval grades.
-      <button type="button" class="link" data-open="${mi}:${esc(s.id)}">Open the full run</button></p>`;
-  document.querySelectorAll("#worked [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
-}
 function renderPipeline() {
   const steps = [
     ["Understand", "Budget, dates, airports, stop rules. Bad dates → ask.", ["outcome", "tool_use"]],

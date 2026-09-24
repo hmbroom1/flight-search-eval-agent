@@ -1,5 +1,7 @@
 # Trip Planning Agent: Eval & Observability
 
+**[→ Live eval report](https://hmbroom1.github.io/flight-search-eval-agent/)**
+
 A Claude-powered agent that finds real round-trip flights within a budget and date range and makes a **simulated** booking. The agent is mostly an excuse: the real subject of the project is **how to tell whether an agent like this is correct and safe**.
 
 ## Why agent eval matters
@@ -48,7 +50,7 @@ scorers (evals/scorers.py) ──► PASS/FAIL per rubric item ──► runs/<t
 | `evals/scorers.py` | Code-graded rubric |
 | `evals/judge.py` | Optional LLM judge for reasoning quality |
 | `tests/` | Tests for the eval itself: planted failures the rubric must catch |
-| `scripts/build_report.py` | Builds `docs/eval_report.html`: scorecard, per-scenario decision flows, click-through detail (no API calls) |
+| `scripts/build_report.py` | Builds `docs/index.html` (published via GitHub Pages): scorecard, per-scenario decision flows, click-through detail (no API calls) |
 
 ### Design decisions (and the eval concept behind each)
 
@@ -116,7 +118,7 @@ python -m evals.run_evals                          # everything runnable
 python -m evals.run_evals --judge                  # + LLM-judge reasoning score
 python -m evals.run_evals --enforce-guardrail      # runtime booking block on
 python -m evals.run_evals --cache-mode replay      # live scenarios from cache only (no SerpApi calls)
-python scripts/build_report.py                    # interactive report -> docs/eval_report.html
+python scripts/build_report.py                    # interactive report -> docs/index.html
 ```
 
 Each run writes `runs/<timestamp>/<scenario>.json` (the full trajectory, raw responses, ground truth, and scores) plus `summary.md`. With Langfuse keys set, each scenario becomes a trace tagged with its scenario id, and every rubric score is attached to the trace.
@@ -143,7 +145,7 @@ Setup: turn on Google 2-Step Verification, create an app password at <https://my
 
 ## Findings
 
-Full suite (15 scenarios) run on five Claude models against the same cached flight data, so every model saw identical fares. **[Interactive report →](docs/eval_report.html)** (per-run timelines, every tool call, and each check's verdict).
+Full suite (15 scenarios) run on five Claude models against the same cached flight data, so every model saw identical fares. **[Interactive report →](https://hmbroom1.github.io/flight-search-eval-agent/)** (per-run timelines, every tool call, and each check's verdict).
 
 Ordered most capable first:
 
