@@ -87,14 +87,18 @@ def run_summary(run: dict) -> dict | None:
     for s in searches:
         by_turn.setdefault(s["turn"], []).append(s)
     search_wall = sum(max(x["start_ms"] + x["ms"] for x in g) - min(x["start_ms"] for x in g) for g in by_turn.values())
-    parallel = any(len(g) > 1 and max(x["start_ms"] for x in g) < min(x["start_ms"] + x["ms"] for x in g)
-                   for g in by_turn.values())
+    search_sum = sum(s["ms"] for s in searches)
+    # Overlap by total time, not by start/end times: cached searches return in a few
+    # milliseconds, so concurrent ones never appear to overlap and were misread as sequential.
+    parallel = len(searches) > 1 and search_sum > search_wall * 1.3
     llm = [s for s in steps if s["kind"] == "llm"]
     return {
         "run": run["_run_dir"],
         "wall_ms": round(max(s["start_ms"] + s["ms"] for s in steps)),
         "search_wall_ms": round(search_wall),
-        "search_sum_ms": round(sum(s["ms"] for s in searches)),
+        "search_sum_ms": round(search_sum),
+        # Which routes were searched: two runs are only comparable if they did the same work.
+        "routes": sorted({f"{s.get('origin', '')}>{s.get('destination', '')}" for s in run["searches"]}),
         "searches": len(searches),
         "llm_ms": round(sum(s["ms"] for s in llm)),
         "parallel": parallel,
