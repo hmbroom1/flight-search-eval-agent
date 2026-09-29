@@ -46,7 +46,10 @@ scenarios:
     origin: Austin or Houston
     origin_codes: [AUS, IAH, HOU]
     destination: Okinawa, Vietnam, Seoul, or Tokyo
-    destination_codes: [OKA, SGN, HAN, DAD, ICN, GMP, HND, NRT]   # GMP: no US nonstops, but reachable via Tokyo
+    # CXR (Cam Ranh/Nha Trang) and PQC (Phu Quoc) are Vietnam's 4th and 5th busiest airports and
+    # were added after a run searched them unprompted: "Vietnam" in the request covers them, so the
+    # answer key has to as well. GMP: no US nonstops, but reachable via Tokyo.
+    destination_codes: [OKA, SGN, HAN, DAD, CXR, PQC, ICN, GMP, HND, NRT]
     depart_date: "2027-06-01"           # a few days after the 2027-05-29 wedding
     return_date: "2027-06-15"           # two weeks
     budget: 2000            # USD per person, round trip

@@ -9,7 +9,7 @@
     --accent: #8AB4FF;
     --pass: #3DD68C; --fail: #FF6B6B; --hold: #F2B84B;
     --pass-bg: rgba(61, 214, 140, .12); --fail-bg: rgba(255, 107, 107, .12); --hold-bg: rgba(242, 184, 75, .12);
-    --m0: #3987e5; --m1: #d95926; --m2: #199e70; --m3: #a07cf0; --m4: #d2a32b;
+    --m0: #3987e5; --m1: #d95926; --m2: #199e70; --m3: #a07cf0; --m4: #d2a32b; --m5: #e879b8;
     --backdrop: rgba(0, 0, 0, .66); --nav-bg: rgba(10, 11, 13, .72);
     --sans: Aptos, "Segoe UI", Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
     --mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, monospace;
@@ -23,7 +23,7 @@
       --accent: #1F4FC4;
       --pass: #13733A; --fail: #C7291D; --hold: #95600B;
       --pass-bg: rgba(19, 115, 58, .14); --fail-bg: rgba(199, 41, 29, .12); --hold-bg: rgba(149, 96, 11, .15);
-      --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a; --m3: #7d4fd0; --m4: #8a6508;
+      --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a; --m3: #7d4fd0; --m4: #8a6508; --m5: #b8377f;
       --backdrop: rgba(10, 11, 13, .4); --nav-bg: rgba(243, 244, 246, .8);
       color-scheme: light;
     }
@@ -35,7 +35,7 @@
     --accent: #1F4FC4;
     --pass: #13733A; --fail: #C7291D; --hold: #95600B;
     --pass-bg: rgba(19, 115, 58, .14); --fail-bg: rgba(199, 41, 29, .12); --hold-bg: rgba(149, 96, 11, .15);
-    --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a; --m3: #7d4fd0; --m4: #8a6508;
+    --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a; --m3: #7d4fd0; --m4: #8a6508; --m5: #b8377f;
     --backdrop: rgba(10, 11, 13, .4); --nav-bg: rgba(243, 244, 246, .8);
     color-scheme: light;
   }
@@ -173,23 +173,9 @@
   details.panel > summary::after { content: "Show"; color: var(--accent); font-size: 13px; }
   details.panel[open] > summary::after { content: "Hide"; }
   details.panel > .body { padding: 0 18px 18px; display: grid; gap: 14px; min-width: 0; }
-  .card-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
   .teach { padding: 18px; display: grid; gap: 8px; align-content: start; }
   .teach .k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
   .teach p { font-size: 13.5px; color: var(--ink-2); }
-  .compare { margin-top: 12px; padding: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-  .compare > div { display: grid; gap: 8px; align-content: start; }
-  .loglines { margin: 0; padding: 12px; border-radius: 10px; background: var(--surface-2); color: var(--ink-2);
-    font: 400 12px/1.7 var(--mono); white-space: pre; overflow-x: auto; }
-  .ttree { margin: 0; padding: 12px; border-radius: 10px; background: var(--surface-2); display: grid; gap: 4px; font-size: 12.5px; }
-  .tnode { display: flex; align-items: baseline; gap: 8px; }
-  .tnode .tkind { font: 500 10px/1.6 var(--mono); letter-spacing: .04em; text-transform: uppercase; padding: 1px 6px;
-    border-radius: 5px; background: var(--surface-3); color: var(--ink-2); flex: none; }
-  .tnode .tname { font-family: var(--mono); }
-  .tnode .tmeta { color: var(--ink-3); font-size: 11.5px; margin-left: auto; white-space: nowrap; }
-  .tnode.d1 { padding-left: 14px; } .tnode.d2 { padding-left: 34px; }
-  .tscores { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 0 0 14px; }
-  .traced { padding: 18px; display: grid; gap: 10px; }
   .boundary { padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 18px; align-items: stretch; margin-bottom: 12px; }
   .bside { display: grid; gap: 8px; align-content: start; }
   .bside ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13.5px; color: var(--ink-2); }
@@ -224,17 +210,6 @@
   .turntbl td { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
   .turntbl .new { color: var(--ink); }
   @media (max-width: 760px) { .ask { grid-template-columns: minmax(0, 1fr); } }
-  .lfpath { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; gap: 8px; align-items: stretch; margin-bottom: 12px; }
-  .lfnode { padding: 14px; border-radius: 12px; background: var(--surface-2); display: grid; gap: 6px; align-content: start; }
-  .lfnode .n { font-weight: 600; font-size: 13.5px; }
-  .lfnode p { font-size: 12.5px; color: var(--ink-2); }
-  .lfarrow { align-self: center; width: 18px; height: 1px; background: var(--line-2); position: relative; }
-  .lfarrow::after { content: ""; position: absolute; right: -1px; top: -4px; border: 4.5px solid transparent; border-left: 6px solid var(--line-2); border-right: 0; }
-  @media (max-width: 880px) {
-    .lfpath { grid-template-columns: minmax(0, 1fr); }
-    .lfarrow { width: 1px; height: 16px; justify-self: center; background: var(--line-2); }
-    .lfarrow::after { right: -4px; top: auto; bottom: -1px; border: 4.5px solid transparent; border-top: 6px solid var(--line-2); border-bottom: 0; }
-  }
   .lf-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 12px; align-items: start; }
   .lf-side { display: grid; gap: 12px; }
   .code { margin: 2px 0; padding: 12px; border-radius: 10px; background: var(--surface-2); color: var(--ink);
@@ -395,7 +370,7 @@
 
 <nav class="top"><div class="in">
   <span class="brand"><span class="logo" aria-hidden="true">✈</span>Trip Agent Evals</span>
-  <span class="navlinks"><a href="#observability">Observability</a><a href="#langfuse">Langfuse</a><a href="#steps">The agent</a><a href="#tested">What we tested</a><a href="#perf">Time &amp; tokens</a><a href="#design">What changed</a><a href="#next">What is next</a></span>
+  <span class="navlinks"><a href="#langfuse">Langfuse</a><a href="#steps">The agent</a><a href="#tested">What we tested</a><a href="#perf">Time &amp; tokens</a><a href="#design">What changed</a><a href="#next">What is next</a></span>
 </div></nav>
 
 <div class="wrap">
@@ -413,35 +388,6 @@
     <p class="verdict" id="verdict"></p>
     <div class="mstrip" id="mstrip"></div>
   </header>
-
-  <section id="observability" aria-labelledby="obs-h">
-    <div class="sec-head"><div><span class="label">The idea</span><h2 id="obs-h">You can't evaluate what you didn't record</h2>
-      <p class="muted small">An agent decides its own path: which tools to call, in what order, how many times. The final message
-        shows none of that. Observability is the practice of recording the path itself, so it can be inspected and graded.</p></div></div>
-    <div class="card-cols">
-      <div class="card teach">
-        <span class="k">Log</span><h3>One line, one moment</h3>
-        <p>"Searched IAH to MEX. Found 12 flights." Easy to write, and enough when a program follows the same path every time.</p>
-        <p class="faint small">Weakness: a thousand lines from a dozen runs, interleaved, with nothing tying them together.</p>
-      </div>
-      <div class="card teach">
-        <span class="k">Trace</span><h3>One run, start to finish</h3>
-        <p>Every step of a single run, kept together as one record with an ID. "What happened on that honeymoon run?" becomes answerable.</p>
-        <p class="faint small">A trace is the unit an eval scores, and the unit a human opens when a score looks wrong.</p>
-      </div>
-      <div class="card teach">
-        <span class="k">Span</span><h3>One step inside a trace</h3>
-        <p>A model turn or a tool call, with a start time, end time, input and output. Spans nest, so a tool call sits under the turn that asked for it.</p>
-        <p class="faint small">Nesting is what turns a list of events into a shape you can read.</p>
-      </div>
-    </div>
-    <div class="card traced">
-      <div><span class="label">The first few steps of one real run, traced</span>
-        <div id="trace-tree"></div></div>
-      <p class="muted small">Nested and attributed rather than flat: each tool call sits under the turn that asked for it,
-        the searches that overlapped are marked, and the eval's verdicts hang off the run they belong to.</p>
-    </div>
-  </section>
 
   <section id="langfuse" aria-labelledby="lf-h">
     <div class="sec-head"><div><span class="label">The tool</span><h2 id="lf-h">How Langfuse works</h2>
@@ -471,16 +417,6 @@
         measure a change, compare two models on the same work, and keep the version that behaves better.</p>
     </div>
 
-    <div class="lfpath">
-      <div class="lfnode"><span class="n">Your code</span><p>Opens a block per run, per turn, per tool call and attaches the inputs, outputs and token counts.</p></div>
-      <div class="lfarrow" aria-hidden="true"></div>
-      <div class="lfnode"><span class="n">The SDK</span><p>Batches finished steps and sends them over HTTPS on a background thread, so recording never slows the run.</p></div>
-      <div class="lfarrow" aria-hidden="true"></div>
-      <div class="lfnode"><span class="n">Langfuse</span><p>Stores the runs and derives latency, tokens and cost. The eval writes its verdicts back to the same run.</p></div>
-      <div class="lfarrow" aria-hidden="true"></div>
-      <div class="lfnode"><span class="n">You</span><p>Filter to the failures, open the exact turn that caused one, and compare a change against the run before it.</p></div>
-    </div>
-
     <div class="lf-grid">
       <div class="card teach">
         <span class="k">Where a trace begins</span>
@@ -490,7 +426,7 @@
         <pre class="code">with tracer.trace("plan-trip", ...):
     run_agent(request, ...)</pre>
         <p>Each model turn and each tool call opens a smaller block of its own, and because those open while the run's
-          block is still open, they nest underneath it. That nesting is the tree above.</p>
+          block is still open, they nest underneath it. That is why one run reads as a tree rather than a list.</p>
       </div>
       <div class="lf-side">
         <div class="card teach"><span class="k">Tokens</span><h3>Exact counts, not estimates</h3>
@@ -627,8 +563,8 @@ const WHY_PLAIN = {
 };
 const STATUS = { eligible_found: ["Found a match", "pass"], no_eligible: ["Nothing fits", "hold"], cannot_complete: ["Couldn't search", "hold"], needs_clarification: ["Asked for clarification", "hold"] };
 const KIND = { live: "Live data", fixture: "Synthetic data", fault: "Injected fault" };
-const mcol = i => `var(--m${i % 5})`;
-const tint = (i, pct) => `color-mix(in srgb, var(--m${i % 5}) ${pct}%, transparent)`;
+const mcol = i => `var(--m${i % 6})`;
+const tint = (i, pct) => `color-mix(in srgb, var(--m${i % 6}) ${pct}%, transparent)`;
 let openM = 0, openI = 0, tab = "flights", filter = "all", allFlights = false;
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -873,30 +809,6 @@ function renderWorked() {
     <p class="muted small" style="margin:10px 12px 12px">Every bar is one recorded step: that record is what the eval grades.
       <button type="button" class="link" data-open="${mi}:${esc(s.id)}">Open the full run</button></p>`;
   document.querySelectorAll("#worked [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
-}
-function renderTrace() {
-  // Built from a recorded run rather than drawn by hand, so the shape on screen is the
-  // shape Langfuse received.
-  const s = workedRun();
-  const el = document.getElementById("trace-tree");
-  if (!s) { el.textContent = "No run recorded."; return; }
-  const t = totals(s);
-  const node = (depth, kind, name, meta) =>
-    `<div class="tnode d${depth}"><span class="tkind">${kind}</span><span class="tname">${esc(name)}</span><span class="tmeta">${esc(meta)}</span></div>`;
-  let rows = node(0, "trace", "plan-trip", `${fmtS(t.wall)} · session: eval run · tags: ${esc(s.id)}, ${esc(s.data)}`);
-  // Only the opening steps: the point is the shape, and a full run is a lot to read on a slide.
-  const SHOW = 6, shown = s.steps.slice(0, SHOW);
-  shown.forEach(st => {
-    rows += st.kind === "llm"
-      ? node(1, "generation", "decide-next-step", `turn ${st.turn + 1} · ${fmtS(st.ms)} · ${fmtK(st.tokens_in)} in / ${fmtK(st.tokens_out)} out`)
-      : node(2, "tool", st.name, `${fmtS(st.ms)}${st.parallel ? " · in parallel" : ""}`);
-  });
-  if (s.steps.length > SHOW) rows += `<div class="tnode d1 faint">… ${s.steps.length - SHOW} more steps</div>`;
-  const scores = DATA.checks.map(k => {
-    const v = s.scores[k].pass;
-    return `<span class="chip ${v === true ? "pass" : v === false ? "fail" : ""}">${CHECK_NAMES[k]} ${v === true ? "1" : v === false ? "0" : "–"}</span>`;
-  }).join("");
-  el.innerHTML = `<div class="ttree">${rows}<div class="tscores">${scores}</div></div>`;
 }
 function renderAsk() {
   const el = document.getElementById("ask-stats");
@@ -1205,6 +1117,6 @@ function armReveal() {
 }
 
 // Each section renders independently: one failure must not take the rest of the page with it.
-[renderHero, renderTrips, renderStress, renderTrace, renderPipeline, renderWorked, renderPerformance, renderAsk, renderBeforeAfter, armReveal]
+[renderHero, renderTrips, renderStress, renderPipeline, renderWorked, renderPerformance, renderAsk, renderBeforeAfter, armReveal]
   .forEach(fn => { try { fn(); } catch (e) { console.error(fn.name + " failed", e); } });
 </script>
