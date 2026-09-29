@@ -141,6 +141,11 @@
   .delta { font: 600 13px/1.3 var(--sans); color: var(--pass); }
 
   .grid-wrap { overflow-x: auto; }
+  .swipe-hint { display: none; }
+  .st tbody td:first-child, .st thead th:first-child, .st tfoot td:first-child { position: sticky; left: 0; z-index: 3; background: var(--surface); }
+  .st tr.group td:first-child { position: static; background: none; }
+  .st tr.group .gl { position: sticky; left: 14px; }
+  .st tfoot td:first-child { background: var(--surface-2); }
   table.st { width: 100%; border-collapse: separate; border-spacing: 0; }
   .st th, .st td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
   .st thead th { font: 500 12px/1.2 var(--sans); color: var(--ink-2); white-space: nowrap; }
@@ -260,15 +265,16 @@
   dialog#detail { border: 1px solid var(--line-2); padding: 0; width: min(1160px, calc(100vw - 24px)); height: calc(100vh - 24px); max-height: calc(100vh - 24px);
     border-radius: 16px; background: var(--bg); color: var(--ink); box-shadow: 0 30px 80px rgba(0, 0, 0, .45); }
   dialog#detail::backdrop { background: var(--backdrop); backdrop-filter: blur(3px); }
-  .dlg { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; }
+  .dlg { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr); height: 100%; }
   .dlg-head { display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--surface); }
   .dlg-head .ttl { display: grid; gap: 3px; min-width: 0; }
   .dlg-head h2 { font-size: 20px; }
   .dlg-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .seg-ctl { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); }
+  .seg-ctl { display: inline-flex; max-width: 100%; overflow-x: auto; scrollbar-width: none; padding: 3px; gap: 2px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); }
+  .seg-ctl button { flex: none; white-space: nowrap; }
   .seg-ctl button { border: 0; background: none; padding: 5px 10px; border-radius: 7px; cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
   .seg-ctl button[aria-pressed="true"] { background: var(--surface-3); color: var(--ink); }
-  .dlg-body { overflow-y: auto; padding: 18px; display: grid; gap: 14px; align-content: start; }
+  .dlg-body { overflow-y: auto; padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-content: start; }
   .dlg-body > * { min-width: 0; }
   .stages { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.15fr) minmax(0, 1fr); }
   .stage { padding: 14px; display: grid; gap: 10px; align-content: start; min-width: 0; }
@@ -304,7 +310,7 @@
   .evalgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
   .evalgrid button { display: flex; justify-content: space-between; gap: 6px; border: 0; border-radius: 7px; padding: 6px 8px; font: 500 12px/1.2 var(--sans); cursor: pointer; text-align: left; }
   .evalgrid .pass { background: var(--pass-bg); color: var(--pass); } .evalgrid .fail { background: var(--fail-bg); color: var(--fail); } .evalgrid .na { background: var(--surface-2); color: var(--ink-3); }
-  .panel2 { padding: 14px 16px; display: grid; gap: 12px; min-width: 0; }
+  .panel2 { padding: 14px 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
   .panel2 .hd { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; align-items: baseline; }
   .diagram { display: flex; align-items: center; overflow-x: auto; padding-bottom: 6px; }
   .dcol { display: grid; gap: 8px; align-content: center; flex: 0 0 auto; }
@@ -371,6 +377,19 @@
   .scroll-reveal { opacity: 0; transform: translateY(1rem); transition: opacity 520ms ease, transform 520ms ease;
     transition-delay: var(--reveal-delay, 0ms); }
   .scroll-reveal.is-visible { opacity: 1; transform: translateY(0); }
+  @media (max-width: 760px) {
+    nav.top .in { flex-wrap: nowrap; }
+    .brand-name { display: none; }
+    .navlinks { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; min-width: 0;
+      mask-image: linear-gradient(90deg, #000 85%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); }
+    .navlinks a { white-space: nowrap; }
+    .swipe-hint { display: block; margin: 0 0 8px; }
+    .st th, .st td { padding: 9px 10px; }
+    .st .nm { font-size: 13.5px; } .st .ds { display: none; }
+    .st tbody td:first-child, .st thead th:first-child, .st tfoot td:first-child { min-width: 118px; max-width: 132px; box-shadow: 1px 0 0 var(--line); }
+    dialog#detail { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+    .dlg-head, .dlg-body { padding-inline: 14px; }
+  }
   @media (prefers-reduced-motion: reduce) {
     .scroll-reveal, .scroll-reveal.is-visible { opacity: 1; transform: none; transition: none; }
     .card, .pick, .cell, .btn, .link { transition: none; }
@@ -379,7 +398,7 @@
 </style>
 
 <nav class="top"><div class="in">
-  <span class="brand"><span class="logo" aria-hidden="true">✈</span>Trip Agent Evals</span>
+  <span class="brand"><span class="logo" aria-hidden="true">✈</span><span class="brand-name">Trip Agent Evals</span></span>
   <span class="navlinks"><a href="#langfuse">Langfuse</a><a href="#steps">The agent</a><a href="#tested">What we tested</a><a href="#perf">Time &amp; tokens</a><a href="#design">What changed</a><a href="#next">What is next</a></span>
 </div></nav>
 
@@ -392,7 +411,7 @@
     <ul class="about">
       <li><b>The agent</b> searches live Google Flights data for a bachelorette weekend in Mexico City and a honeymoon in Asia, checks each option against the budget, dates and stop rules, and makes a simulated booking.</li>
       <li><b>The eval</b> scores every step, not just the final answer, with code-graded checks for accuracy, grounding and safety, because a confident reply can still hide an invented price or a rule-breaking booking.</li>
-      <li><b>The traces</b> in Langfuse record each run step by step, which is how the problems in the findings were found.</li>
+      <li><b>The traces</b> in Langfuse record each run step by step, which is how I tracked down each failure in <a href="#tested">What we tested on</a>.</li>
       <li><b>The comparison</b> runs the same scenarios on <span id="about-models">several Claude models</span> to see what each one trades between quality, speed and cost.</li>
     </ul>
     <p class="verdict" id="verdict"></p>
@@ -474,6 +493,7 @@
     <div class="trips" id="trip-cards"></div>
     <div class="sec-head sub-head"><div><span class="label">All 15 scenarios · every model</span>
       <p class="muted small">The two trips above plus thirteen stress tests.</p></div></div>
+    <p class="muted small swipe-hint">Swipe the table sideways to see all models. Tap a result for the full run.</p>
     <div class="card grid-wrap"><table class="st" id="stress-grid"></table></div>
   </section>
 
@@ -587,7 +607,7 @@ const tint = (i, pct) => `color-mix(in srgb, var(--m${i % 6}) ${pct}%, transpare
 let openM = 0, openI = 0, tab = "flights", filter = "all", allFlights = false;
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const title = id => id.replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
+const title = id => id.replace(/_/g, " ").replace(/\bapi\b/gi, "API").replace(/^./, c => c.toUpperCase());
 const money = n => n == null ? "no price" : "$" + Number(n).toLocaleString("en-US");
 const hhmm = t => (t || "").split(" ")[1] || "";
 const day = t => (t || "").split(" ")[0] || "";
@@ -782,11 +802,11 @@ function renderPerfDetail() {
 function renderStress() {
   const desc = id => (M.map((m, i) => find(i, id)).find(Boolean) || {}).description || "";
   const cell = (i, id) => { const s = find(i, id); if (!s) return `<td class="m faint">–</td>`; const f = failed(s);
-    return `<td class="m"><button type="button" class="cell ${f.length ? "fail" : ""}" data-open="${i}:${esc(id)}" data-tip="${esc(f.length ? f.map(k => CHECK_NAMES[k] + ": " + (s.scores[k].details[0] || "")).join("\n") : "All checks pass · " + fmtS(totals(s).wall) + " · " + usd(s.cost))}">
+    return `<td class="m"><button type="button" class="cell ${f.length ? "fail" : ""}" data-open="${i}:${esc(id)}" aria-label="${esc(`${M[i].label}, ${title(id)}: ${f.length ? "failed " + f.map(k => CHECK_NAMES[k]).join(", ") : "passed all checks"}. Open run details`)}" data-tip="${esc(f.length ? f.map(k => CHECK_NAMES[k] + ": " + (s.scores[k].details[0] || "")).join("\n") : "All checks pass · " + fmtS(totals(s).wall) + " · " + usd(s.cost))}">
       <span class="ic">${f.length ? "✕" : "✓"}</span>${f.length ? `<span class="why">${esc(f.map(k => CHECK_NAMES[k]).join(", "))}</span>` : ""}</button></td>`; };
   const ids = GROUPS.flatMap(g => g[1]);
   document.getElementById("stress-grid").innerHTML = `<thead><tr><th>Scenario</th>${M.map((m, i) => `<th class="m"><span class="mdot" style="background:${mcol(i)}"></span>&nbsp; ${esc(m.label)}</th>`).join("")}</tr></thead>
-    <tbody>${GROUPS.map(([g, list]) => `<tr class="group"><td colspan="${M.length + 1}">${esc(g)}</td></tr>` + list.filter(id => M.some((m, i) => find(i, id)))
+    <tbody>${GROUPS.map(([g, list]) => `<tr class="group"><td colspan="${M.length + 1}"><span class="gl">${esc(g)}</span></td></tr>` + list.filter(id => M.some((m, i) => find(i, id)))
       .map(id => `<tr><td><div class="nm">${esc(title(id))}</div><div class="ds">${esc(desc(id))}</div></td>${M.map((m, i) => cell(i, id)).join("")}</tr>`).join("")).join("")}</tbody>
     <tfoot><tr><td>Passed every check</td>${M.map((m, i) => { const sc = ids.map(id => find(i, id)).filter(Boolean); return `<td class="m">${sc.filter(passesAll).length} / ${sc.length}</td>`; }).join("")}</tr></tfoot>`;
   document.querySelectorAll("#stress-grid [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
@@ -1113,6 +1133,15 @@ function tipOn(root) {
     tip.style.top = (e.clientY + 14) + "px";
   });
   root.addEventListener("mouseleave", () => { tip.hidden = true; });
+  root.addEventListener("focusin", e => {
+    const t = e.target.closest?.("[data-tip]");
+    if (!t || !t.matches(":focus-visible")) { tip.hidden = true; return; }
+    const r = t.getBoundingClientRect();
+    tip.textContent = t.dataset.tip; tip.hidden = false;
+    tip.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 300)) + "px";
+    tip.style.top = (r.bottom + 8) + "px";
+  });
+  root.addEventListener("focusout", () => { tip.hidden = true; });
 }
 
 const dlg = document.getElementById("detail");
