@@ -145,18 +145,18 @@ Setup: turn on Google 2-Step Verification, create an app password at <https://my
 
 ## Findings
 
-Full suite (15 scenarios) run on five Claude models against the same cached flight data, so every model saw identical fares. **[Interactive report →](https://hmbroom1.github.io/flight-search-eval-agent/)** (per-run timelines, every tool call, and each check's verdict).
+Full suite (15 scenarios) run on six Claude models against the same cached flight data, so every model saw identical fares. **[Interactive report →](https://hmbroom1.github.io/flight-search-eval-agent/)** (per-run timelines, every tool call, and each check's verdict).
 
 Ordered most capable first:
 
-| | Fable 5.1 | Opus 5.5 | Opus 5 | Sonnet 5 | Haiku 4.5 |
-|---|---|---|---|---|---|
-| Passed every check | **15/15** | **15/15** | 14/15 | **15/15** | 11/15 |
-| Avg run time | 22.1 s | 16.2 s | 16.4 s | 14.7 s | 15.8 s |
-| Avg cost per run | $0.19 | $0.076 | $0.095 | **$0.039** | $0.020 |
-| List price per Mtok (in/out) | $10 / $50 | $4 / $20 | $5 / $25 | $2 / $10 | $1 / $5 |
+| | Fable 5.1 | Opus 5.5 | Opus 5 | Sonnet 5.5 | Sonnet 5 | Haiku 4.5 |
+|---|---|---|---|---|---|---|
+| Passed every check | **15/15** | **15/15** | 14/15 | **15/15** | **15/15** | 11/15 |
+| Avg run time | 21.8 s | 16.1 s | 16.0 s | **11.6 s** | 15.1 s | 16.6 s |
+| Avg cost per run | $0.17 | $0.076 | $0.095 | **$0.036** | $0.040 | $0.018 |
+| List price per Mtok (in/out) | $10 / $50 | $4 / $20 | $5 / $25 | $2 / $10 | $2 / $10 | $1 / $5 |
 
-**0. Three models tie at the top, and the most capable one buys nothing.** Sonnet 5, Opus 5.5 and Fable 5.1 each pass all 15. Fable 5.1 is Anthropic's most capable widely released model and costs **5x** Sonnet 5 per run here for the same score, while taking 50% longer. That is the practical value of an eval: this task is bounded — search, apply explicit rules, report — so extra reasoning capability has nothing to buy. The same eval on a harder task could easily rank them the other way; the point is that you measure instead of assuming.
+**0. Four models tie at the top, and the most capable one buys nothing.** Sonnet 5.5, Sonnet 5, Opus 5.5 and Fable 5.1 each pass all 15. Fable 5.1 is Anthropic's most capable widely released model and costs **4.8x** Sonnet 5.5 per run here for the same score, while taking nearly twice as long. That is the practical value of an eval: this task is bounded — search, apply explicit rules, report — so extra reasoning capability has nothing to buy. The same eval on a harder task could easily rank them the other way; the point is that you measure instead of assuming.
 
 **1. Haiku's failures were protocol failures, not bad answers.** In `return_before_departure`, `vague_dates`, and `empty_results`, Haiku wrote a sensible reply in prose but never called `submit_answer`, so there was no structured result for anything downstream to use. An eval that only read the final message would have passed all three. Only a trajectory eval catches this.
 
@@ -174,9 +174,11 @@ All three were fixed before any results were trusted. Earlier, a planted-failure
 - About 90% of wall time is model turns, and 91–92% of tokens are input: the conversation is re-sent every turn. Prompt caching is the obvious next step.
 - Token counts differ only about 6% between models, so the cost gap comes almost entirely from price per token.
 
-**5. The real trips.** All three models agreed on both picks: a $653 nonstop to Mexico City for the bachelorette trip, and a $1,525 nonstop Houston→Tokyo for the honeymoon.
+**5. The eval was under-specified, and a model found it.** Sonnet 5.5 searched Cam Ranh (CXR) and Phu Quoc (PQC) unprompted, then listed a Cam Ranh fare as eligible. The answer key counted that as a false positive, because its airport list only held Saigon, Hanoi and Da Nang. But the request says "Vietnam", and CXR and PQC are Vietnam's 4th and 5th busiest airports, so the model read the request correctly and the key was too narrow. Both airports were added to the scenario and every model was re-run against the corrected key. Worth separating from the eval bugs in finding 3: nothing was broken here, the spec was just vaguer than the code that checked it.
 
-**Caveat:** this is one run per model per scenario — 75 runs in total. A three-way tie at the top is exactly the situation where run-to-run variance matters most, so ranking the tied models needs repeated runs before it means anything. The gap down to Haiku 4.5 is large enough to be real.
+**6. The real trips.** All three models agreed on both picks: a $653 nonstop to Mexico City for the bachelorette trip, and a $1,525 nonstop Houston→Tokyo for the honeymoon.
+
+**Caveat:** this is one run per model per scenario — 90 runs in total. A four-way tie at the top is exactly the situation where run-to-run variance matters most, so ranking the tied models needs repeated runs before it means anything. Haiku 4.5 showed that variance directly: across two runs of the same honeymoon scenario it failed in two different ways, once on accuracy and once by skipping the final tool call entirely. The gap down to Haiku is large enough to be real; the order within the tie is not.
 
 ## Eval concepts demonstrated
 
