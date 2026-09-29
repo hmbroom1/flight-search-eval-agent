@@ -176,6 +176,29 @@
   details.panel > summary::after { content: "Show"; color: var(--accent); font-size: 13px; }
   details.panel[open] > summary::after { content: "Hide"; }
   details.panel > .body { padding: 0 18px 18px; display: grid; gap: 14px; min-width: 0; }
+  .card-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .teach { padding: 18px; display: grid; gap: 8px; align-content: start; }
+  .teach .k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .teach p { font-size: 13.5px; color: var(--ink-2); }
+  .compare { margin-top: 12px; padding: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .compare > div { display: grid; gap: 8px; align-content: start; }
+  .loglines { margin: 0; padding: 12px; border-radius: 10px; background: var(--surface-2); color: var(--ink-2);
+    font: 400 12px/1.7 var(--mono); white-space: pre; overflow-x: auto; }
+  .ttree { margin: 0; padding: 12px; border-radius: 10px; background: var(--surface-2); display: grid; gap: 4px; font-size: 12.5px; }
+  .tnode { display: flex; align-items: baseline; gap: 8px; }
+  .tnode .tkind { font: 500 10px/1.6 var(--mono); letter-spacing: .04em; text-transform: uppercase; padding: 1px 6px;
+    border-radius: 5px; background: var(--surface-3); color: var(--ink-2); flex: none; }
+  .tnode .tname { font-family: var(--mono); }
+  .tnode .tmeta { color: var(--ink-3); font-size: 11.5px; margin-left: auto; white-space: nowrap; }
+  .tnode.d1 { padding-left: 14px; } .tnode.d2 { padding-left: 34px; }
+  .tscores { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 0 0 14px; }
+  .flow4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .fstep { padding: 14px; border-radius: 12px; background: var(--surface-2); display: grid; gap: 6px; align-content: start; }
+  .fstep .n { font: 500 11px/1 var(--mono); color: var(--ink-3); }
+  .fstep h4 { font-size: 13.5px; }
+  .fstep p { font-size: 12.5px; color: var(--ink-2); }
+  .fstep code { font: 500 11.5px var(--mono); color: var(--ink); }
+  @media (max-width: 880px) { .flow4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .pipeline { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; align-items: stretch; }
   .pstep { position: relative; }
   .pstep::after { content: ""; position: absolute; right: -8px; top: 50%; width: 8px; height: 1px; background: var(--line-2, var(--line)); }
@@ -308,7 +331,7 @@
 
 <nav class="top"><div class="in">
   <span class="brand"><span class="logo" aria-hidden="true">✈</span>Trip Agent Evals</span>
-  <span class="navlinks"><a href="#tested">What we tested</a><a href="#steps">How a run works</a><a href="#perf">Time &amp; tokens</a><a href="#design">What changed</a></span>
+  <span class="navlinks"><a href="#observability">Observability</a><a href="#langfuse">Langfuse</a><a href="#steps">The agent</a><a href="#tested">What we tested</a><a href="#perf">Time &amp; tokens</a><a href="#design">What changed</a></span>
 </div></nav>
 
 <div class="wrap">
@@ -327,6 +350,80 @@
     <div class="mstrip" id="mstrip"></div>
   </header>
 
+  <section id="observability" aria-labelledby="obs-h">
+    <div class="sec-head"><div><span class="label">The idea</span><h2 id="obs-h">You can't evaluate what you didn't record</h2>
+      <p class="muted small">An agent decides its own path: which tools to call, in what order, how many times. The final message
+        shows none of that. Observability is the practice of recording the path itself, so it can be inspected and graded.</p></div></div>
+    <div class="card-cols">
+      <div class="card teach">
+        <span class="k">Log</span><h3>One line, one moment</h3>
+        <p>"Searched IAH to MEX. Found 12 flights." Easy to write, and enough when a program follows the same path every time.</p>
+        <p class="faint small">Weakness: a thousand lines from a dozen runs, interleaved, with nothing tying them together.</p>
+      </div>
+      <div class="card teach">
+        <span class="k">Trace</span><h3>One run, start to finish</h3>
+        <p>Every step of a single run, kept together as one record with an ID. "What happened on that honeymoon run?" becomes answerable.</p>
+        <p class="faint small">A trace is the unit an eval scores, and the unit a human opens when a score looks wrong.</p>
+      </div>
+      <div class="card teach">
+        <span class="k">Span</span><h3>One step inside a trace</h3>
+        <p>A model turn or a tool call, with a start time, end time, input and output. Spans nest, so a tool call sits under the turn that asked for it.</p>
+        <p class="faint small">Nesting is what turns a list of events into a shape you can read.</p>
+      </div>
+    </div>
+    <div class="card compare">
+      <div><span class="label">Logs alone</span>
+        <pre class="loglines">12:02:11  search_flights called
+12:02:19  12 offers returned
+12:02:19  check_eligibility called
+12:02:19  3 passed
+12:02:21  simulate_book called
+12:02:33  answer submitted</pre>
+        <p class="muted small">Flat and ordered by clock time. Which run? Which turn asked for the search? What did the model see
+          before it chose? If two runs overlap, the lines interleave.</p></div>
+      <div><span class="label">The same run, traced</span>
+        <div id="trace-tree"></div>
+        <p class="muted small">Same events, but nested and attributed, with the model's full input, the token counts and the
+          eval's verdicts attached to the run they belong to.</p></div>
+    </div>
+  </section>
+
+  <section id="langfuse" aria-labelledby="lf-h">
+    <div class="sec-head"><div><span class="label">The tool</span><h2 id="lf-h">How Langfuse works</h2>
+      <p class="muted small">Langfuse is the recorder. The important thing to know is that it does not watch the agent:
+        the agent's own code reports to it.</p></div></div>
+    <div class="flow4">
+      <div class="fstep"><span class="n">01</span><h4>Your code opens a trace</h4>
+        <p>The run starts, and the agent announces it: a name (<code>plan-trip</code>), a session, and tags for the scenario, the model and the data source.</p></div>
+      <div class="fstep"><span class="n">02</span><h4>Each step opens a span</h4>
+        <p>A model turn becomes a <code>generation</code>; a tool call becomes a <code>tool</code> span. Each carries its input, output, duration, and for model turns the token counts the API returned.</p></div>
+      <div class="fstep"><span class="n">03</span><h4>Spans are sent in batches</h4>
+        <p>Finished spans go over HTTPS on a background thread, so tracing never slows the agent down. A short script flushes before it exits, or the last spans are lost.</p></div>
+      <div class="fstep"><span class="n">04</span><h4>Scores attach afterwards</h4>
+        <p>The eval grades the recorded run, then writes its six verdicts back to the trace by ID. That join is what makes a failing score clickable.</p></div>
+    </div>
+    <div class="card-cols">
+      <div class="card teach"><span class="k">Push, not watch</span><h3>Nothing is intercepted</h3>
+        <p>Delete the tracing lines and the agent behaves exactly the same; you simply have no record. That's also why it degrades
+          safely: no keys, no tracing, everything still runs.</p></div>
+      <div class="card teach"><span class="k">Tokens</span><h3>Counts come from the API</h3>
+        <p>Langfuse doesn't estimate. Each model turn reports the exact input and output tokens Anthropic billed, and the cost
+          shown here is those counts times the published price.</p></div>
+      <div class="card teach"><span class="k">Scores</span><h3>The eval half</h3>
+        <p>A score is a name, a number and a comment, attached to a trace. Code checks, an LLM judge and a human thumbs-down all
+          arrive the same way, which is how one dashboard covers all three.</p></div>
+    </div>
+    <p class="muted small" id="trace-link-line"></p>
+  </section>
+
+  <section id="steps" aria-labelledby="steps-h">
+    <div class="sec-head"><div><span class="label">One run, end to end</span><h2 id="steps-h">What the agent actually does</h2>
+      <p class="muted small">Six stages, each watched by a different check. That is what makes a wrong step visible even when the final answer reads well.</p></div></div>
+    <div class="pipeline" id="pipeline"></div>
+    <div class="card panel2" id="worked"></div>
+  </section>
+
+
   <section id="tested" aria-labelledby="tested-h">
     <div class="sec-head"><div><span class="label">The dataset</span><h2 id="tested-h">What we tested on</h2>
       <p class="muted small">Two real trips on live Google Flights data, plus stress tests on synthetic fares and injected API failures.
@@ -337,14 +434,6 @@
       <p class="muted small">The two trips above plus thirteen stress tests.</p></div></div>
     <div class="card grid-wrap"><table class="st" id="stress-grid"></table></div>
   </section>
-
-  <section id="steps" aria-labelledby="steps-h">
-    <div class="sec-head"><div><span class="label">One run, end to end</span><h2 id="steps-h">What the agent actually does</h2>
-      <p class="muted small">Six stages, each watched by a different check. That is what makes a wrong step visible even when the final answer reads well.</p></div></div>
-    <div class="pipeline" id="pipeline"></div>
-    <div class="card panel2" id="worked"></div>
-  </section>
-
 
   <section id="perf" aria-labelledby="perf-h">
     <div class="sec-head"><div><span class="label">Performance</span><h2 id="perf-h">Where the time and tokens go</h2>
@@ -613,18 +702,24 @@ function renderStress() {
   document.querySelectorAll("#stress-grid [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
 }
 
-function renderWorked() {
+function workedRunPair() {
   const prefer = ["honeymoon", "bachelorette"];
   const toolMs = x => x.steps.filter(st => st.kind === "tool").reduce((a, st) => Math.max(a, st.ms || 0), 0);
-  let mi = 0, s = null;
   for (const id of prefer) {
     // Prefer a run whose searches were fetched live: cached runs return in milliseconds, which
     // hides both the parallel overlap and the share of time the tools actually take.
     const runs = M.map((m, i) => [i, find(i, id)]).filter(([, x]) => x && x.steps.length);
     const best = runs.filter(([, x]) => toolMs(x) > 1000).sort((a, b) => toolMs(b[1]) - toolMs(a[1]))[0] || runs[0];
-    if (best) { mi = best[0]; s = best[1]; break; }
+    if (best) return best;
   }
-  if (!s) { const j = M.findIndex(m => m.scenarios.some(x => x.steps.length)); if (j < 0) { document.getElementById("worked").hidden = true; return; } mi = j; s = M[j].scenarios.find(x => x.steps.length); }
+  const j = M.findIndex(m => m.scenarios.some(x => x.steps.length));
+  return j < 0 ? null : [j, M[j].scenarios.find(x => x.steps.length)];
+}
+function workedRun() { const pair = workedRunPair(); return pair ? pair[1] : null; }
+function renderWorked() {
+  const pair = workedRunPair();
+  if (!pair) { document.getElementById("worked").hidden = true; return; }
+  const [mi, s] = pair;
   const t = totals(s), par = s.steps.filter(x => x.parallel).length, col = mcol(mi);
   // One real run as a timeline: bar length is time, so "the model thinks, the tools are instant"
   // and "these four searches overlap" are visible rather than stated.
@@ -652,6 +747,35 @@ function renderWorked() {
     <p class="muted small" style="margin:10px 12px 12px">Every bar is one recorded step: that record is what the eval grades.
       <button type="button" class="link" data-open="${mi}:${esc(s.id)}">Open the full run</button></p>`;
   document.querySelectorAll("#worked [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
+}
+function renderTrace() {
+  // Built from a recorded run rather than drawn by hand, so the shape on screen is the
+  // shape Langfuse received.
+  const s = workedRun();
+  const el = document.getElementById("trace-tree");
+  if (!s) { el.textContent = "No run recorded."; return; }
+  const t = totals(s);
+  const node = (depth, kind, name, meta) =>
+    `<div class="tnode d${depth}"><span class="tkind">${kind}</span><span class="tname">${esc(name)}</span><span class="tmeta">${esc(meta)}</span></div>`;
+  let rows = node(0, "trace", "plan-trip", `${fmtS(t.wall)} · session: eval run · tags: ${esc(s.id)}, ${esc(s.data)}`);
+  let turn = -1;
+  s.steps.forEach(st => {
+    if (st.kind === "llm") {
+      turn = st.turn;
+      rows += node(1, "generation", "decide-next-step", `turn ${st.turn + 1} · ${fmtS(st.ms)} · ${fmtK(st.tokens_in)} in / ${fmtK(st.tokens_out)} out`);
+    } else {
+      rows += node(2, "tool", st.name, `${fmtS(st.ms)}${st.parallel ? " · in parallel" : ""}`);
+    }
+  });
+  const scores = DATA.checks.map(k => {
+    const v = s.scores[k].pass;
+    return `<span class="chip ${v === true ? "pass" : v === false ? "fail" : ""}">${CHECK_NAMES[k]} ${v === true ? "1" : v === false ? "0" : "–"}</span>`;
+  }).join("");
+  el.innerHTML = `<div class="ttree">${rows}<div class="tscores">${scores}</div></div>`;
+  const link = document.getElementById("trace-link-line");
+  if (link) link.innerHTML = s.trace_url
+    ? `The trace above is real: <a href="${esc(s.trace_url)}" target="_blank" rel="noopener">open it in Langfuse</a> (sign-in required, it's my project).`
+    : "";
 }
 function renderPipeline() {
   const steps = [
@@ -912,6 +1036,6 @@ new MutationObserver(() => { const tip = document.getElementById("tip"); (dlg.op
   .observe(dlg, { attributes: true, attributeFilter: ["open"] });
 
 // Each section renders independently: one failure must not take the rest of the page with it.
-[renderHero, renderTrips, renderStress, renderPipeline, renderWorked, renderPerformance, renderBeforeAfter]
+[renderHero, renderTrips, renderStress, renderTrace, renderPipeline, renderWorked, renderPerformance, renderBeforeAfter]
   .forEach(fn => { try { fn(); } catch (e) { console.error(fn.name + " failed", e); } });
 </script>
