@@ -1,8 +1,5 @@
 <title>Trip Agent Evals</title>
 <meta name="description" content="Five Claude models on the same flight-search agent: real trips, stress tests, time and tokens.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <style>
   /* Dark-first. The light theme redefines the same tokens. */
   :root {
@@ -14,8 +11,8 @@
     --pass-bg: rgba(61, 214, 140, .12); --fail-bg: rgba(255, 107, 107, .12); --hold-bg: rgba(242, 184, 75, .12);
     --m0: #3987e5; --m1: #d95926; --m2: #199e70; --m3: #a07cf0; --m4: #d2a32b;
     --backdrop: rgba(0, 0, 0, .66); --nav-bg: rgba(10, 11, 13, .72);
-    --sans: "Geist", "Segoe UI", system-ui, sans-serif;
-    --mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --sans: Aptos, "Segoe UI", Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, monospace;
     color-scheme: dark;
   }
   @media (prefers-color-scheme: light) {
@@ -50,8 +47,8 @@
   .wrap { max-width: 1100px; margin: 0 auto; padding-block: 28px 72px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 64px; }
   .wrap > * { min-width: 0; }
   h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -.02em; text-wrap: balance; }
-  h1 { font-size: clamp(32px, 4.6vw, 48px); line-height: 1.05; letter-spacing: -.035em; }
-  h2 { font-size: 22px; line-height: 1.2; }
+  h1 { font-size: clamp(34px, 5vw, 52px); font-weight: 700; line-height: 1.05; letter-spacing: -.045em; }
+  h2 { font-size: 24px; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; }
   h3 { font-size: 15.5px; }
   p { margin: 0; }
   button { font: inherit; color: inherit; }
@@ -192,6 +189,57 @@
   .tnode .tmeta { color: var(--ink-3); font-size: 11.5px; margin-left: auto; white-space: nowrap; }
   .tnode.d1 { padding-left: 14px; } .tnode.d2 { padding-left: 34px; }
   .tscores { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 0 0 14px; }
+  .traced { padding: 18px; display: grid; gap: 10px; }
+  .boundary { padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 18px; align-items: stretch; margin-bottom: 12px; }
+  .bside { display: grid; gap: 8px; align-content: start; }
+  .bside ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13.5px; color: var(--ink-2); }
+  .bside.dim ul { color: var(--ink-3); }
+  .bside .k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+  .bside .k.ok { color: var(--pass); } .bside .k.no { color: var(--ink-3); }
+  .bline { position: relative; width: 1px; background: repeating-linear-gradient(var(--line-2) 0 6px, transparent 6px 12px); }
+  .bline span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(90deg);
+    font: 500 10px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);
+    background: var(--surface); padding: 6px 4px; white-space: nowrap; }
+  .bfoot { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 12px; margin-top: 2px; }
+  @media (max-width: 760px) {
+    .boundary { grid-template-columns: minmax(0, 1fr); }
+    .bline { width: auto; height: 1px; background: repeating-linear-gradient(90deg, var(--line-2) 0 6px, transparent 6px 12px); }
+    .bline span { transform: translate(-50%, -50%); }
+  }
+  .ask { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .askcard { padding: 18px; display: grid; gap: 10px; align-content: start; }
+  .askcard.wide { grid-column: 1 / -1; }
+  .askcard .k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .askcard p { font-size: 13.5px; color: var(--ink-2); }
+  .tryout { margin: 0; padding-left: 20px; display: grid; gap: 8px; font-size: 13.5px; color: var(--ink-2); }
+  .tryout b { color: var(--ink); }
+  .askstat { display: flex; align-items: baseline; gap: 10px; }
+  .askstat b { font: 600 30px/1.05 var(--sans); letter-spacing: -.02em; }
+  .askstat span { font-size: 13px; color: var(--ink-2); }
+  .turntbl { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .turntbl th, .turntbl td { text-align: right; padding: 5px 6px; font-size: 12.5px; border-bottom: 1px solid var(--line); }
+  .turntbl th:first-child, .turntbl td:first-child { text-align: left; }
+  .turntbl th { font: 500 11px/1.2 var(--sans); color: var(--ink-3); }
+  .turntbl th[data-tip] { cursor: help; text-decoration: underline dotted var(--line-2); text-underline-offset: 3px; }
+  .turntbl td { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+  .turntbl .new { color: var(--ink); }
+  @media (max-width: 760px) { .ask { grid-template-columns: minmax(0, 1fr); } }
+  .lfpath { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; gap: 8px; align-items: stretch; margin-bottom: 12px; }
+  .lfnode { padding: 14px; border-radius: 12px; background: var(--surface-2); display: grid; gap: 6px; align-content: start; }
+  .lfnode .n { font-weight: 600; font-size: 13.5px; }
+  .lfnode p { font-size: 12.5px; color: var(--ink-2); }
+  .lfarrow { align-self: center; width: 18px; height: 1px; background: var(--line-2); position: relative; }
+  .lfarrow::after { content: ""; position: absolute; right: -1px; top: -4px; border: 4.5px solid transparent; border-left: 6px solid var(--line-2); border-right: 0; }
+  @media (max-width: 880px) {
+    .lfpath { grid-template-columns: minmax(0, 1fr); }
+    .lfarrow { width: 1px; height: 16px; justify-self: center; background: var(--line-2); }
+    .lfarrow::after { right: -4px; top: auto; bottom: -1px; border: 4.5px solid transparent; border-top: 6px solid var(--line-2); border-bottom: 0; }
+  }
+  .lf-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+  .lf-side { display: grid; gap: 12px; }
+  .code { margin: 2px 0; padding: 12px; border-radius: 10px; background: var(--surface-2); color: var(--ink);
+    font: 400 12.5px/1.7 var(--mono); white-space: pre; overflow-x: auto; }
+  @media (max-width: 880px) { .lf-grid { grid-template-columns: minmax(0, 1fr); } }
   .flow4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
   .fstep { padding: 14px; border-radius: 12px; background: var(--surface-2); display: grid; gap: 6px; align-content: start; }
   .fstep .n { font: 500 11px/1 var(--mono); color: var(--ink-3); }
@@ -326,12 +374,28 @@
   .whyrow ul { margin: 6px 0 4px; padding-left: 18px; }
   .whyrow li { margin: 2px 0; }
   .whyrow .quote { margin: 8px 0 6px; }
+  /* Borrowed from site.css so the page moves the way the rest of the site does. */
+  .card, .pick, .cell, .btn, .link, .seg-ctl button, details.panel > summary {
+    transition: border-color 180ms ease, color 180ms ease, opacity 520ms ease, transform 180ms ease;
+  }
+  .mcard:hover, .trip:hover, .teach:hover, .insight:hover, .chart:hover, .askcard:hover,
+  .pick:hover, .lfnode:hover, .pstep:hover, .fstep:hover, details.panel > summary:hover {
+    border-color: var(--line-2); transform: translateY(-2px);
+  }
+  .link:hover, .open-hint:hover { transform: translateX(2px); }
+  .scroll-reveal { opacity: 0; transform: translateY(1rem); transition: opacity 520ms ease, transform 520ms ease;
+    transition-delay: var(--reveal-delay, 0ms); }
+  .scroll-reveal.is-visible { opacity: 1; transform: translateY(0); }
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-reveal, .scroll-reveal.is-visible { opacity: 1; transform: none; transition: none; }
+    .card, .pick, .cell, .btn, .link { transition: none; }
+  }
   @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 </style>
 
 <nav class="top"><div class="in">
   <span class="brand"><span class="logo" aria-hidden="true">✈</span>Trip Agent Evals</span>
-  <span class="navlinks"><a href="#observability">Observability</a><a href="#langfuse">Langfuse</a><a href="#steps">The agent</a><a href="#tested">What we tested</a><a href="#perf">Time &amp; tokens</a><a href="#design">What changed</a></span>
+  <span class="navlinks"><a href="#observability">Observability</a><a href="#langfuse">Langfuse</a><a href="#steps">The agent</a><a href="#tested">What we tested</a><a href="#perf">Time &amp; tokens</a><a href="#design">What changed</a><a href="#next">What is next</a></span>
 </div></nav>
 
 <div class="wrap">
@@ -371,49 +435,72 @@
         <p class="faint small">Nesting is what turns a list of events into a shape you can read.</p>
       </div>
     </div>
-    <div class="card compare">
-      <div><span class="label">Logs alone</span>
-        <pre class="loglines">12:02:11  search_flights called
-12:02:19  12 offers returned
-12:02:19  check_eligibility called
-12:02:19  3 passed
-12:02:21  simulate_book called
-12:02:33  answer submitted</pre>
-        <p class="muted small">Flat and ordered by clock time. Which run? Which turn asked for the search? What did the model see
-          before it chose? If two runs overlap, the lines interleave.</p></div>
-      <div><span class="label">The same run, traced</span>
-        <div id="trace-tree"></div>
-        <p class="muted small">Same events, but nested and attributed, with the model's full input, the token counts and the
-          eval's verdicts attached to the run they belong to.</p></div>
+    <div class="card traced">
+      <div><span class="label">The first few steps of one real run, traced</span>
+        <div id="trace-tree"></div></div>
+      <p class="muted small">Nested and attributed rather than flat: each tool call sits under the turn that asked for it,
+        the searches that overlapped are marked, and the eval's verdicts hang off the run they belong to.</p>
     </div>
   </section>
 
   <section id="langfuse" aria-labelledby="lf-h">
     <div class="sec-head"><div><span class="label">The tool</span><h2 id="lf-h">How Langfuse works</h2>
-      <p class="muted small">Langfuse is the recorder. The important thing to know is that it does not watch the agent:
-        the agent's own code reports to it.</p></div></div>
-    <div class="flow4">
-      <div class="fstep"><span class="n">01</span><h4>Your code opens a trace</h4>
-        <p>The run starts, and the agent announces it: a name (<code>plan-trip</code>), a session, and tags for the scenario, the model and the data source.</p></div>
-      <div class="fstep"><span class="n">02</span><h4>Each step opens a span</h4>
-        <p>A model turn becomes a <code>generation</code>; a tool call becomes a <code>tool</code> span. Each carries its input, output, duration, and for model turns the token counts the API returned.</p></div>
-      <div class="fstep"><span class="n">03</span><h4>Spans are sent in batches</h4>
-        <p>Finished spans go over HTTPS on a background thread, so tracing never slows the agent down. A short script flushes before it exits, or the last spans are lost.</p></div>
-      <div class="fstep"><span class="n">04</span><h4>Scores attach afterwards</h4>
-        <p>The eval grades the recorded run, then writes its six verdicts back to the trace by ID. That join is what makes a failing score clickable.</p></div>
+      <p class="muted small">Langfuse is an observability tool: it collects what each run did and turns it into latency, token
+        usage, cost and scores you can compare. It never watches the agent, the agent reports to it, so a step nobody wrote a
+        line for is a step nobody can see.</p></div></div>
+    <div class="card boundary">
+      <div class="bside">
+        <span class="k ok">Visible · crosses the API boundary</span>
+        <ul>
+          <li>Everything sent in: system prompt, conversation, tool definitions</li>
+          <li>Everything that comes back: text, tool requests, stop reason</li>
+          <li>Every tool result, because your own code produced it</li>
+          <li>Tokens, latency and cost for each turn</li>
+        </ul>
+      </div>
+      <div class="bline" aria-hidden="true"><span>the model</span></div>
+      <div class="bside dim">
+        <span class="k no">Not visible · inside the model</span>
+        <ul>
+          <li>The computation itself</li>
+          <li>Why it picked this tool over another</li>
+          <li>The raw reasoning (summaries are a self-report, not a readout)</li>
+        </ul>
+      </div>
+      <p class="muted small bfoot">You can't open the model. You can see everything crossing the line, which is enough to
+        measure a change, compare two models on the same work, and keep the version that behaves better.</p>
     </div>
-    <div class="card-cols">
-      <div class="card teach"><span class="k">Push, not watch</span><h3>Nothing is intercepted</h3>
-        <p>Delete the tracing lines and the agent behaves exactly the same; you simply have no record. That's also why it degrades
-          safely: no keys, no tracing, everything still runs.</p></div>
-      <div class="card teach"><span class="k">Tokens</span><h3>Counts come from the API</h3>
-        <p>Langfuse doesn't estimate. Each model turn reports the exact input and output tokens Anthropic billed, and the cost
-          shown here is those counts times the published price.</p></div>
-      <div class="card teach"><span class="k">Scores</span><h3>The eval half</h3>
-        <p>A score is a name, a number and a comment, attached to a trace. Code checks, an LLM judge and a human thumbs-down all
-          arrive the same way, which is how one dashboard covers all three.</p></div>
+
+    <div class="lfpath">
+      <div class="lfnode"><span class="n">Your code</span><p>Opens a block per run, per turn, per tool call and attaches the inputs, outputs and token counts.</p></div>
+      <div class="lfarrow" aria-hidden="true"></div>
+      <div class="lfnode"><span class="n">The SDK</span><p>Batches finished steps and sends them over HTTPS on a background thread, so recording never slows the run.</p></div>
+      <div class="lfarrow" aria-hidden="true"></div>
+      <div class="lfnode"><span class="n">Langfuse</span><p>Stores the runs and derives latency, tokens and cost. The eval writes its verdicts back to the same run.</p></div>
+      <div class="lfarrow" aria-hidden="true"></div>
+      <div class="lfnode"><span class="n">You</span><p>Filter to the failures, open the exact turn that caused one, and compare a change against the run before it.</p></div>
     </div>
-    <p class="muted small" id="trace-link-line"></p>
+
+    <div class="lf-grid">
+      <div class="card teach">
+        <span class="k">Where a trace begins</span>
+        <h3>A block of code, not a setting</h3>
+        <p>Nothing is recorded unless the agent's own code says so. Opening this block starts the record and the clock;
+          closing it ends them. Everything the agent does in between lands inside.</p>
+        <pre class="code">with tracer.trace("plan-trip", ...):
+    run_agent(request, ...)</pre>
+        <p>Each model turn and each tool call opens a smaller block of its own, and because those open while the run's
+          block is still open, they nest underneath it. That nesting is the tree above.</p>
+      </div>
+      <div class="lf-side">
+        <div class="card teach"><span class="k">Tokens</span><h3>Exact counts, not estimates</h3>
+          <p>Every model turn reports the input and output tokens the API actually billed, and that number is what gets
+            recorded. The costs on this page are those counts times the published price.</p></div>
+        <div class="card teach"><span class="k">Scores</span><h3>Attached after the run</h3>
+          <p>The agent finishes, the eval grades the recording, and the six verdicts are written back to that trace by its
+            ID. That join is what makes a failed check clickable.</p></div>
+      </div>
+    </div>
   </section>
 
   <section id="steps" aria-labelledby="steps-h">
@@ -449,8 +536,47 @@
     <div class="card ba" id="beforeafter" hidden></div>
   </section>
 
-  <footer>Built from saved runs by <code>python scripts/build_report.py</code>. Scores are recomputed with the current eval code. Stress tests use
-    synthetic fares; real trips use Google Flights data via SerpApi, and every model saw identical results. Costs use list prices. No real bookings are made.</footer>
+  <section id="next" aria-labelledby="next-h">
+    <div class="sec-head"><div><span class="label">What the numbers made me ask</span><h2 id="next-h">Where would the next saving come from?</h2>
+      <p class="muted small">Same loop as the change above, one step earlier: the traces raised a question I hadn't thought to
+        ask, and the same eval can settle which answer is worth shipping. Proposed, not built.</p></div></div>
+    <div class="ask">
+      <div class="card askcard">
+        <span class="k">1 · What the data showed</span>
+        <div id="ask-stats"></div>
+      </div>
+      <div class="card askcard">
+        <span class="k">2 · The question it raised</span>
+        <h3>Why is the input so big, and which part of it is avoidable?</h3>
+        <p>The API keeps no memory between turns, so each turn re-sends the whole conversation: the system prompt, the tool
+          definitions, and every search result collected so far. The reply the user reads is the small part.</p>
+        <p class="faint small">Nothing in the final answers hinted at this. It only showed up because every turn's token
+          counts were recorded.</p>
+      </div>
+      <div class="card askcard wide">
+        <span class="k">3 · What I'd try, in order of expected payoff</span>
+        <ol class="tryout">
+          <li><b>Prompt caching.</b> Mark the stable prefix so repeat reads bill at a fraction of the normal input price.
+            It targets the re-sent share directly, which is the largest block.</li>
+          <li><b>Smaller tool results.</b> The biggest single jump is the flight search payload. Returning fewer offers, or
+            fewer fields per offer, shrinks it once and then again on every later turn that resends it.</li>
+          <li><b>Context editing.</b> Clear old tool results from the history once the agent has used them, so the last turn
+            isn't still carrying the first turn's raw payload.</li>
+          <li><b>Fewer turns.</b> Every tool call costs a round trip: the model asks, the code runs the tool, the model is
+            called again to see the result. <span id="turn-waste">One turn here does almost nothing yet pays for a full
+            resend of everything before it.</span> Whether two of those steps can share a turn without breaking
+            "check before you book" is a question for the eval, not a guess.</li>
+        </ol>
+        <p class="muted small">How I'd settle it: run the same 15 scenarios before and after, and compare cost, latency and
+          all six checks. A change that saves money and breaks grounding is not a saving.</p>
+        <p class="muted small"><b>One thing first.</b> The runs currently record input and output tokens only. Caching adds
+          separate counts for cache writes and cache reads, and plain input tokens exclude both, so switching it on without
+          recording them would make the bill look better than it is. Fix the accounting, then measure.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>Simulated bookings only. No flight is ever purchased.</footer>
 </div>
 
 <dialog id="detail" aria-labelledby="d-title">
@@ -758,24 +884,54 @@ function renderTrace() {
   const node = (depth, kind, name, meta) =>
     `<div class="tnode d${depth}"><span class="tkind">${kind}</span><span class="tname">${esc(name)}</span><span class="tmeta">${esc(meta)}</span></div>`;
   let rows = node(0, "trace", "plan-trip", `${fmtS(t.wall)} · session: eval run · tags: ${esc(s.id)}, ${esc(s.data)}`);
-  let turn = -1;
-  s.steps.forEach(st => {
-    if (st.kind === "llm") {
-      turn = st.turn;
-      rows += node(1, "generation", "decide-next-step", `turn ${st.turn + 1} · ${fmtS(st.ms)} · ${fmtK(st.tokens_in)} in / ${fmtK(st.tokens_out)} out`);
-    } else {
-      rows += node(2, "tool", st.name, `${fmtS(st.ms)}${st.parallel ? " · in parallel" : ""}`);
-    }
+  // Only the opening steps: the point is the shape, and a full run is a lot to read on a slide.
+  const SHOW = 6, shown = s.steps.slice(0, SHOW);
+  shown.forEach(st => {
+    rows += st.kind === "llm"
+      ? node(1, "generation", "decide-next-step", `turn ${st.turn + 1} · ${fmtS(st.ms)} · ${fmtK(st.tokens_in)} in / ${fmtK(st.tokens_out)} out`)
+      : node(2, "tool", st.name, `${fmtS(st.ms)}${st.parallel ? " · in parallel" : ""}`);
   });
+  if (s.steps.length > SHOW) rows += `<div class="tnode d1 faint">… ${s.steps.length - SHOW} more steps</div>`;
   const scores = DATA.checks.map(k => {
     const v = s.scores[k].pass;
     return `<span class="chip ${v === true ? "pass" : v === false ? "fail" : ""}">${CHECK_NAMES[k]} ${v === true ? "1" : v === false ? "0" : "–"}</span>`;
   }).join("");
   el.innerHTML = `<div class="ttree">${rows}<div class="tscores">${scores}</div></div>`;
-  const link = document.getElementById("trace-link-line");
-  if (link) link.innerHTML = s.trace_url
-    ? `The trace above is real: <a href="${esc(s.trace_url)}" target="_blank" rel="noopener">open it in Langfuse</a> (sign-in required, it's my project).`
-    : "";
+}
+function renderAsk() {
+  const el = document.getElementById("ask-stats");
+  if (!el) return;
+  const all = M.flatMap(m => m.scenarios);
+  const tin = all.reduce((a, s) => a + s.tokens_in, 0), tout = all.reduce((a, s) => a + s.tokens_out, 0);
+  const s = workedRun();
+  const turns = s ? s.steps.filter(st => st.kind === "llm") : [];
+  // Each turn re-sends the conversation so far, so the last turn's input is the only unique
+  // content; everything billed before it is the same text sent again.
+  const billed = turns.reduce((a, st) => a + st.tokens_in, 0);
+  const unique = turns.length ? turns[turns.length - 1].tokens_in : 0;
+  const resent = billed - unique;
+  // Point at the cheapest turn by output: it is the clearest example of paying a full
+  // resend for a decision worth a couple of dozen tokens.
+  const lean = turns.length > 2 ? turns.slice(0, -1).reduce((a, b) => (b.tokens_out < a.tokens_out ? b : a)) : null;
+  const waste = document.getElementById("turn-waste");
+  if (waste && lean) {
+    const n = turns.indexOf(lean) + 1;
+    waste.innerHTML = `In this run, turn ${n} wrote just <b>${lean.tokens_out.toLocaleString()} output tokens</b> — one booking
+      call — and still paid to resend the <b>${lean.tokens_in.toLocaleString()} tokens</b> before it.`;
+  }
+  let prev = 0;
+  const rows = turns.map((st, i) => {
+    const delta = st.tokens_in - prev; prev = st.tokens_in;
+    return `<tr><td>Turn ${i + 1}</td><td>${st.tokens_in.toLocaleString()}</td><td class="new">+${delta.toLocaleString()}</td><td>${st.tokens_out.toLocaleString()}</td></tr>`;
+  }).join("");
+  el.innerHTML = `<div class="askstat"><b>${Math.round(100 * tin / Math.max(1, tin + tout))}%</b><span>of all tokens across ${all.length} runs are input, not output</span></div>
+    ${turns.length ? `<p class="muted small" style="margin-top:2px">One run, turn by turn (${esc(title(s.id))}):</p>
+    <table class="turntbl"><thead><tr><th>Turn</th>
+      <th data-tip="What this turn actually cost.&#10;The whole conversation is sent again every turn, so this is the full context, not just the new part.">Input billed</th>
+      <th data-tip="How much the conversation grew since the previous turn: the tool results that came back, plus the model's own last reply.&#10;&#10;Everything else in 'input billed' is text you already paid for on an earlier turn. Nothing is cached, so it is charged again in full.&#10;&#10;That gap is the waste prompt caching would remove.">New that turn</th>
+      <th data-tip="What the model wrote that turn: its reasoning, its tool requests, and on the last turn the final answer.">Output</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="askstat" style="margin-top:6px"><b>${Math.round(100 * resent / Math.max(1, billed))}%</b><span>of that run's input was text re-sent from an earlier turn
+      (${resent.toLocaleString()} of ${billed.toLocaleString()} tokens)</span></div>` : ""}`;
 }
 function renderPipeline() {
   const steps = [
@@ -1035,7 +1191,20 @@ tipOn(document.body); tipOn(dlg);
 new MutationObserver(() => { const tip = document.getElementById("tip"); (dlg.open ? dlg : document.body).appendChild(tip); })
   .observe(dlg, { attributes: true, attributeFilter: ["open"] });
 
+function armReveal() {
+  const targets = document.querySelectorAll(".mcard, .trip, .teach, .insight, .chart, .askcard, .lfnode, .finding, .boundary, .traced, .grid-wrap, #worked, .ba");
+  if (!targets.length || !("IntersectionObserver" in window) || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  targets.forEach((el, i) => {
+    el.classList.add("scroll-reveal");
+    el.style.setProperty("--reveal-delay", `${Math.min(i * 55, 220)}ms`);
+  });
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("is-visible"); obs.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  targets.forEach(el => obs.observe(el));
+}
+
 // Each section renders independently: one failure must not take the rest of the page with it.
-[renderHero, renderTrips, renderStress, renderTrace, renderPipeline, renderWorked, renderPerformance, renderBeforeAfter]
+[renderHero, renderTrips, renderStress, renderTrace, renderPipeline, renderWorked, renderPerformance, renderAsk, renderBeforeAfter, armReveal]
   .forEach(fn => { try { fn(); } catch (e) { console.error(fn.name + " failed", e); } });
 </script>
