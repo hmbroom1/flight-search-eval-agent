@@ -173,9 +173,6 @@
   details.panel > summary::after { content: "Show"; color: var(--accent); font-size: 13px; }
   details.panel[open] > summary::after { content: "Hide"; }
   details.panel > .body { padding: 0 18px 18px; display: grid; gap: 14px; min-width: 0; }
-  .teach { padding: 18px; display: grid; gap: 8px; align-content: start; }
-  .teach .k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
-  .teach p { font-size: 13.5px; color: var(--ink-2); }
   .boundary { padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 18px; align-items: stretch; margin-bottom: 12px; }
   .bside { display: grid; gap: 8px; align-content: start; }
   .bside ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13.5px; color: var(--ink-2); }
@@ -210,11 +207,24 @@
   .turntbl td { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
   .turntbl .new { color: var(--ink); }
   @media (max-width: 760px) { .ask { grid-template-columns: minmax(0, 1fr); } }
-  .lf-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+  .trace-card { padding: 18px; display: grid; gap: 10px; }
+  .trace-card > p { font-size: 13.5px; color: var(--ink-2); max-width: 90ch; }
+  .trace-card .k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .anno-code { line-height: 2; overflow-x: auto; }
+  .anno-code .ln { display: block; white-space: pre; }
+  .anno-code .s { color: var(--pass); }
+  .mk, .anno .num { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 50%;
+    background: var(--accent); color: var(--bg); font: 600 10.5px/1 var(--sans); flex: none; }
+  .mk { margin: 0 6px; vertical-align: 2px; }
+  .anno { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+  .anno li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start;
+    font-size: 13.5px; color: var(--ink-2); max-width: 100ch; }
+  .anno .num { margin-top: 2px; }
+  .anno b { color: var(--ink); }
+  .anno code { font: 500 12.5px var(--mono); color: var(--ink); }
   .lf-side { display: grid; gap: 12px; }
   .code { margin: 2px 0; padding: 12px; border-radius: 10px; background: var(--surface-2); color: var(--ink);
     font: 400 12.5px/1.7 var(--mono); white-space: pre; overflow-x: auto; }
-  @media (max-width: 880px) { .lf-grid { grid-template-columns: minmax(0, 1fr); } }
   .flow4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
   .fstep { padding: 14px; border-radius: 12px; background: var(--surface-2); display: grid; gap: 6px; align-content: start; }
   .fstep .n { font: 500 11px/1 var(--mono); color: var(--ink-3); }
@@ -353,8 +363,8 @@
   .card, .pick, .cell, .btn, .link, .seg-ctl button, details.panel > summary {
     transition: border-color 180ms ease, color 180ms ease, opacity 520ms ease, transform 180ms ease;
   }
-  .mcard:hover, .trip:hover, .teach:hover, .insight:hover, .chart:hover, .askcard:hover,
-  .pick:hover, .lfnode:hover, .pstep:hover, .fstep:hover, details.panel > summary:hover {
+  .mcard:hover, .trip:hover, .trace-card:hover, .insight:hover, .chart:hover, .askcard:hover,
+  .pick:hover, .pstep:hover, details.panel > summary:hover {
     border-color: var(--line-2); transform: translateY(-2px);
   }
   .link:hover, .open-hint:hover { transform: translateX(2px); }
@@ -417,25 +427,34 @@
         measure a change, compare two models on the same work, and keep the version that behaves better.</p>
     </div>
 
-    <div class="lf-grid">
-      <div class="card teach">
-        <span class="k">Where a trace begins</span>
-        <h3>A block of code, not a setting</h3>
-        <p>Nothing is recorded unless the agent's own code says so. Opening this block starts the record and the clock;
-          closing it ends them. Everything the agent does in between lands inside.</p>
-        <pre class="code">with tracer.trace("plan-trip", ...):
-    run_agent(request, ...)</pre>
-        <p>Each model turn and each tool call opens a smaller block of its own, and because those open while the run's
-          block is still open, they nest underneath it. That is why one run reads as a tree rather than a list.</p>
-      </div>
-      <div class="lf-side">
-        <div class="card teach"><span class="k">Tokens</span><h3>Exact counts, not estimates</h3>
-          <p>Every model turn reports the input and output tokens the API actually billed, and that number is what gets
-            recorded. The costs on this page are those counts times the published price.</p></div>
-        <div class="card teach"><span class="k">Scores</span><h3>Attached after the run</h3>
-          <p>The agent finishes, the eval grades the recording, and the six verdicts are written back to that trace by its
-            ID. That join is what makes a failed check clickable.</p></div>
-      </div>
+    <div class="card trace-card">
+      <span class="k">What's a trace</span>
+      <h3>One run, recorded by the code that runs it</h3>
+      <p>A trace is the record of a single run: every model turn, every tool call, what went in, what came back and how
+        long each took. It exists because the agent's own code opens it and fills it in. Here is that code, with the
+        parts that matter numbered.</p>
+      <pre class="code anno-code"><span class="ln"><span class="mk">1</span>with tracer.trace(<span class="s">"plan-trip"</span>, session_id=run_id, tags=[scenario, model]):<span class="mk">2</span><span class="mk">3</span></span>
+<span class="ln">    <span class="mk">4</span>with tracer.observation(as_type=<span class="s">"generation"</span>, name=<span class="s">"decide-next-step"</span>) as gen:</span>
+<span class="ln">        response = client.beta.messages.create(model=model, tools=TOOL_DEFS, ...)<span class="mk">5</span></span>
+<span class="ln">        gen.update(output=response.content, usage_details={<span class="s">"input"</span>: n_in, <span class="s">"output"</span>: n_out})<span class="mk">6</span></span></pre>
+      <ol class="anno">
+        <li><span class="num">1</span><span><b>The <code>with</code> block is the record.</b> Opening it starts the trace and the clock. When the
+          indented code finishes, the block closes and the duration is stored. Start and stop are just the edges of a
+          block of code you chose.</span></li>
+        <li><span class="num">2</span><span><b>The name.</b> What this run is called in the interface. Every run of this agent is a
+          <code>plan-trip</code>, which is what makes a hundred of them comparable.</span></li>
+        <li><span class="num">3</span><span><b>Session and tags.</b> Labels for finding it later: which scenario, which model, which eval
+          run it belonged to. This is what lets you ask for "every honeymoon run on Haiku" instead of scrolling.</span></li>
+        <li><span class="num">4</span><span><b>A smaller block per step.</b> One per model turn, one per tool call. Because they open
+          while the run's block is still open, they nest underneath it, which is why a trace reads as a tree.
+          <code>generation</code> tells the interface this step was a model call, so it shows the prompt, the reply and
+          the tokens.</span></li>
+        <li><span class="num">5</span><span><b>The actual work.</b> This line is the API call, and Langfuse has nothing to do with it.
+          Delete the tracing lines around it and the agent behaves exactly the same; you simply have no record.</span></li>
+        <li><span class="num">6</span><span><b>What gets recorded, including the tokens.</b> The reply, plus the input and output token
+          counts the API returned. These are exact, not estimated: the same numbers the bill is based on, which is where
+          every cost on this page comes from. Leave this line out and the turn shows a duration and nothing else.</span></li>
+      </ol>
     </div>
   </section>
 
@@ -722,17 +741,26 @@ function renderPerformance() {
   renderPerfDetail();
 }
 function renderBeforeAfter() {
+  const el = document.getElementById("beforeafter");
+  // A fair pair is the same work twice: the same routes, both fetched live rather than from
+  // cache, once without overlap and once with. Anything else compares two different jobs.
+  const LIVE_MS = 3000;
+  const sameRoutes = (a, b) => JSON.stringify(a.routes || []) === JSON.stringify(b.routes || []);
   const pairs = [];
   M.forEach((m, i) => m.scenarios.forEach(s => {
-    const seq = s.history.filter(h => h.searches > 1 && !h.parallel), par = s.history.filter(h => h.searches > 1 && h.parallel);
-    if (seq.length && par.length) pairs.push({ i, s, before: seq[seq.length - 1], after: par[par.length - 1] });
+    const live = s.history.filter(h => h.searches > 1 && h.search_sum_ms >= LIVE_MS);
+    const seq = live.filter(h => !h.parallel), par = live.filter(h => h.parallel);
+    for (const after of par) {
+      const before = seq.filter(h => sameRoutes(h, after) && h.search_wall_ms > after.search_wall_ms).pop();
+      if (before) { pairs.push({ i, s, before, after }); break; }
+    }
   }));
-  const el = document.getElementById("beforeafter");
   el.hidden = !pairs.length;
   if (!pairs.length) return;
   const bar = (label, ms, max, bg, tip) => `<div class="bar"><span class="lbl">${label}</span><div class="track" style="width:${Math.max(3, 100 * ms / max)}%"><span class="seg" style="flex:1;background:${bg}" data-tip="${esc(tip)}"></span></div><span class="val">${fmtS(ms)}</span></div>`;
   el.innerHTML = `<div style="display:grid;gap:4px"><span class="label">Change shipped</span><h3>Searches now run in parallel</h3>
-    <span class="sub muted small">The traces showed Claude asking for several searches at once while the agent ran them one after another. Same scenario and live data, before vs. after.</span></div>
+    <span class="sub muted small">The traces showed Claude asking for several searches at once while the agent ran them one after another.
+      Same scenario, same routes, live data both times.</span></div>
     ${pairs.map(({ i, s, before, after }) => { const max = Math.max(before.search_wall_ms, after.search_wall_ms), saved = before.search_wall_ms - after.search_wall_ms;
       return `<div class="bars"><span class="small muted"><span class="mdot" style="background:${mcol(i)}"></span> ${esc(M[i].label)} · ${esc(title(s.id))} · ${after.searches} searches</span>
         ${bar("Before", before.search_wall_ms, max, "var(--ink-3)", `One after another (run ${before.run})`)}
@@ -1104,7 +1132,7 @@ new MutationObserver(() => { const tip = document.getElementById("tip"); (dlg.op
   .observe(dlg, { attributes: true, attributeFilter: ["open"] });
 
 function armReveal() {
-  const targets = document.querySelectorAll(".mcard, .trip, .teach, .insight, .chart, .askcard, .lfnode, .finding, .boundary, .traced, .grid-wrap, #worked, .ba");
+  const targets = document.querySelectorAll(".mcard, .trip, .trace-card, .insight, .chart, .askcard, .boundary, .grid-wrap, #worked, .ba");
   if (!targets.length || !("IntersectionObserver" in window) || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   targets.forEach((el, i) => {
     el.classList.add("scroll-reveal");
