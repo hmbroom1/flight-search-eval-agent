@@ -259,8 +259,6 @@
   .tag { font: 500 10.5px/1 var(--mono); padding: 4px 6px; border-radius: 5px; background: var(--surface-3); color: var(--ink-2); }
   @media (max-width: 880px) { .pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
-  footer { font-size: 12.5px; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 18px; }
-  footer code { font-family: var(--mono); }
 
   dialog#detail { border: 1px solid var(--line-2); padding: 0; width: min(1160px, calc(100vw - 24px)); height: calc(100vh - 24px); max-height: calc(100vh - 24px);
     border-radius: 16px; background: var(--bg); color: var(--ink); box-shadow: 0 30px 80px rgba(0, 0, 0, .45); }
@@ -551,7 +549,6 @@
     </div>
   </section>
 
-  <footer>Simulated bookings only. No flight is ever purchased.</footer>
 </div>
 
 <dialog id="detail" aria-labelledby="d-title">
@@ -736,7 +733,7 @@ function renderPerformance() {
   const chart = (h, sub, rows, legend) => `<div class="card chart"><h3>${h}</h3><span class="sub">${sub}</span>${legend || ""}<div class="bars">${rows}</div></div>`;
   const maxT = Math.max(...ST.map(s => s.avgLlm + s.avgTool)), maxTok = Math.max(...ST.map(s => s.avgIn + s.avgOut)), maxC = Math.max(...ST.map(s => s.avgCost));
   const row = (i, segs, total, max, val) => `<div class="bar"><span class="lbl"><span class="mdot" style="background:${mcol(i)}"></span>${esc(M[i].label)}</span>
-    <div class="track" style="width:${Math.max(3, 100 * total / max)}%">${segs.filter(g => g.v > 0).map(g => `<span class="seg" style="flex:${g.v};background:${g.bg}" data-tip="${esc(g.tip)}"></span>`).join("")}</div><span class="val">${val}</span></div>`;
+    <div class="track" style="width:${Math.max(3, 100 * total / max)}%">${segs.filter(g => g.v > 0).map(g => `<span class="seg" style="flex:${g.v / total};background:${g.bg}" data-tip="${esc(g.tip)}"></span>`).join("")}</div><span class="val">${val}</span></div>`;
   const split = (a, b) => `<div class="legend"><span><i style="background:var(--ink-2)"></i>${a}</span><span><i style="background:color-mix(in srgb, var(--ink-2) 35%, transparent)"></i>${b}</span></div>`;
   document.getElementById("perf-charts").innerHTML =
     chart("Run time", "Average per scenario", ST.map((s, i) => row(i, [
@@ -749,14 +746,17 @@ function renderPerformance() {
   const llm = allT.reduce((a, t) => a + t.llmMs, 0), tool = allT.reduce((a, t) => a + t.toolMs, 0);
   const tin = allT.reduce((a, t) => a + t.tin, 0), tall = allT.reduce((a, t) => a + t.tin + t.tout, 0);
   const slowTool = allSc.flatMap(s => s.steps.filter(x => x.kind === "tool").map(st => st.ms)).reduce((a, x) => Math.max(a, x), 0);
-  const opus = M.findIndex(m => m.id === "claude-opus-5"), cheap = ST.map((s, i) => [s.avgCost, i]).sort((a, b) => a[0] - b[0])[0];
+  const topScore = Math.max(...ST.map(s => s.clean));
+  const tied = ST.map((s, i) => [s.avgCost, i]).filter(([, i]) => ST[i].clean === topScore).sort((a, b) => a[0] - b[0]);
+  const [cheapTop, priceyTop] = [tied[0], tied[tied.length - 1]];
   const tokSpread = Math.max(...ST.map(s => s.avgIn + s.avgOut)) / Math.max(1, Math.min(...ST.map(s => s.avgIn + s.avgOut)));
   const cards = [
     [`${Math.round(100 * llm / Math.max(1, llm + tool))}%`, "of run time is the model", `Eligibility checks and bookings take milliseconds; only live flight searches take seconds (slowest ${fmtS(slowTool)}).`],
     [`${Math.round(100 * tin / Math.max(1, tall))}%`, "of tokens are input", "Every turn re-sends the whole conversation, search results included. Prompt caching would cut most of that cost."],
   ];
-  if (opus >= 0 && cheap[1] !== opus) cards.push([`${(ST[opus].avgCost / cheap[0]).toFixed(1)}×`, `cost gap, ${M[opus].label} vs ${M[cheap[1]].label}`,
-    `Token counts differ by only ${Math.round(100 * (tokSpread - 1))}% across models, so price per token drives almost all of the cost difference.`]);
+  if (tied.length > 1) { const perfect = topScore === ST[cheapTop[1]].n;
+    cards.push([`${(priceyTop[0] / cheapTop[0]).toFixed(1)}×`, `cost gap for the same ${perfect ? "perfect " : ""}score`,
+    `${M[priceyTop[1]].label} and ${M[cheapTop[1]].label} both ${perfect ? `passed all ${ST[cheapTop[1]].n} scenarios` : `passed ${topScore} of ${ST[cheapTop[1]].n}`}. Token counts differ by only ${Math.round(100 * (tokSpread - 1))}% across models, so price per token drives almost all of the cost difference.`]); }
   document.getElementById("perf-insights").innerHTML = cards.map(([b, h, p]) => `<div class="card insight"><b>${b}</b><h3>${h}</h3><p>${p}</p></div>`).join("");
   renderPerfDetail();
 }
