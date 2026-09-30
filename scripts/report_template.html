@@ -1,45 +1,46 @@
 <title>Trip Agent Evals</title>
-<meta name="description" content="Five Claude models on the same flight-search agent: real trips, stress tests, time and tokens.">
+<meta name="description" content="Claude models compared on the same flight-search agent: real trips, stress tests, time and tokens.">
 <style>
   /* Dark-first. The light theme redefines the same tokens. */
   :root {
-    --bg: #0A0B0D; --surface: #111316; --surface-2: #171A1E; --surface-3: #1E2227;
-    --line: #23272D; --line-2: #2E333A;
-    --ink: #EDEEF0; --ink-2: #A3A7AE; --ink-3: #6E737B;
-    --accent: #8AB4FF;
+    --bg: #101010; --surface: #151515; --surface-2: #1D1D1D; --surface-3: #262626;
+    --line: #2A2A2A; --line-2: #343434;
+    --ink: #F1F1EF; --ink-2: #B5B5B2; --ink-3: #8F8F8C;
+    --accent: #B9AFFF;
     --pass: #3DD68C; --fail: #FF6B6B; --hold: #F2B84B;
     --pass-bg: rgba(61, 214, 140, .12); --fail-bg: rgba(255, 107, 107, .12); --hold-bg: rgba(242, 184, 75, .12);
     --m0: #3987e5; --m1: #d95926; --m2: #199e70; --m3: #a07cf0; --m4: #d2a32b; --m5: #e879b8;
-    --backdrop: rgba(0, 0, 0, .66); --nav-bg: rgba(10, 11, 13, .72);
+    --backdrop: rgba(0, 0, 0, .66); --nav-bg: rgba(16, 16, 16, .78);
     --sans: Aptos, "Segoe UI", Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
     --mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, monospace;
     color-scheme: dark;
   }
   @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]) {
-      --bg: #F3F4F6; --surface: #FFFFFF; --surface-2: #F1F2F4; --surface-3: #E7E9EC;
-      --line: #D9DCE1; --line-2: #C4C8CF;
-      --ink: #0A0B0D; --ink-2: #4A4E56; --ink-3: #6B7079;
-      --accent: #1F4FC4;
+      --bg: #F7F7F5; --surface: #FFFFFF; --surface-2: #EEEEEC; --surface-3: #E4E4E1;
+      --line: #E0E0DB; --line-2: #D0D0CA;
+      --ink: #111111; --ink-2: #555555; --ink-3: #6B6B68;
+      --accent: #6A5ACD;
       --pass: #13733A; --fail: #C7291D; --hold: #95600B;
       --pass-bg: rgba(19, 115, 58, .14); --fail-bg: rgba(199, 41, 29, .12); --hold-bg: rgba(149, 96, 11, .15);
       --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a; --m3: #7d4fd0; --m4: #8a6508; --m5: #b8377f;
-      --backdrop: rgba(10, 11, 13, .4); --nav-bg: rgba(243, 244, 246, .8);
+      --backdrop: rgba(17, 17, 17, .4); --nav-bg: rgba(247, 247, 245, .82);
       color-scheme: light;
     }
   }
   :root[data-theme="light"] {
-    --bg: #F3F4F6; --surface: #FFFFFF; --surface-2: #F1F2F4; --surface-3: #E7E9EC;
-    --line: #D9DCE1; --line-2: #C4C8CF;
-    --ink: #0A0B0D; --ink-2: #4A4E56; --ink-3: #6B7079;
-    --accent: #1F4FC4;
+    --bg: #F7F7F5; --surface: #FFFFFF; --surface-2: #EEEEEC; --surface-3: #E4E4E1;
+    --line: #E0E0DB; --line-2: #D0D0CA;
+    --ink: #111111; --ink-2: #555555; --ink-3: #6B6B68;
+    --accent: #6A5ACD;
     --pass: #13733A; --fail: #C7291D; --hold: #95600B;
     --pass-bg: rgba(19, 115, 58, .14); --fail-bg: rgba(199, 41, 29, .12); --hold-bg: rgba(149, 96, 11, .15);
     --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a; --m3: #7d4fd0; --m4: #8a6508; --m5: #b8377f;
-    --backdrop: rgba(10, 11, 13, .4); --nav-bg: rgba(243, 244, 246, .8);
+    --backdrop: rgba(17, 17, 17, .4); --nav-bg: rgba(247, 247, 245, .82);
     color-scheme: light;
   }
 
+  @font-face { font-family: "Hannah Handwriting"; src: url("https://hannahbroom.com/HannahHandwritingFont-Regular.ttf") format("truetype"); font-display: swap; }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   .card { box-shadow: 0 1px 2px rgba(0, 0, 0, .04); }
@@ -58,9 +59,11 @@
   .muted { color: var(--ink-2); }
   .faint { color: var(--ink-3); }
   .small { font-size: 13px; }
-  .label { font: 500 11.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+  .byline { font-size: 13.5px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 20px; }
+  .byline a { color: var(--ink); }
+  .label { font: 600 12.5px/1.3 var(--sans); color: var(--ink-3); }
   .sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 10px 20px; margin-bottom: 18px; }
-  .sec-head > div { display: grid; gap: 6px; max-width: 64ch; }
+  .sec-head > div { display: grid; gap: 6px; }
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
   .mdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
   .btn { border: 1px solid var(--line-2); background: var(--surface-2); border-radius: 8px; padding: 6px 11px; cursor: pointer; font-size: 13px; font-weight: 500; }
@@ -70,28 +73,51 @@
   nav.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; margin-inline: -16px; padding: 12px 16px;
     background: var(--nav-bg); backdrop-filter: saturate(160%) blur(12px); -webkit-backdrop-filter: saturate(160%) blur(12px); border-bottom: 1px solid var(--line); }
   nav.top .in { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .brand { font-weight: 600; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; }
-  .brand .logo { width: 22px; height: 22px; border-radius: 6px; background: var(--ink); color: var(--bg); display: grid; place-items: center; font-size: 12px; }
+  .brand { display: flex; align-items: baseline; gap: 14px; }
+  .brand-name { font: 700 24px/1 "Hannah Handwriting", var(--sans); color: var(--ink); text-decoration: none; white-space: nowrap; }
+  .brand .back { font-size: 13px; color: var(--ink-2); text-decoration: none; white-space: nowrap; }
+  .brand a:hover { color: var(--accent); }
   .navlinks { display: flex; gap: 2px; flex-wrap: wrap; }
   .navlinks a { color: var(--ink-2); text-decoration: none; font-size: 13px; padding: 5px 9px; border-radius: 7px; }
   .navlinks a:hover { background: var(--surface-2); color: var(--ink); }
 
   .hero { display: grid; gap: 20px; padding-top: 12px; }
-  .hero p.lede { font-size: 16px; color: var(--ink-2); max-width: 72ch; }
-  .about { margin: 0; padding-left: 18px; display: grid; gap: 6px; max-width: 76ch; color: var(--ink-2); font-size: 14.5px; }
+  .hero p.lede { font-size: 16px; color: var(--ink-2); }
+  .about { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--ink-2); font-size: 14.5px; }
   .about b { color: var(--ink); font-weight: 600; }
   .about li::marker { color: var(--ink-3); }
-  .verdict { font-size: 15px; max-width: 72ch; padding-left: 12px; border-left: 2px solid var(--ink); }
-  .mstrip { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
-  .mcard { padding: 16px 18px; display: grid; gap: 14px; border-top: 2px solid var(--mc); }
+  .result { display: grid; gap: 16px; margin-block: 8px 4px; }
+  .headline { font-size: clamp(22px, 3vw, 30px); line-height: 1.2; letter-spacing: -.02em; text-wrap: balance; }
+  .headline em { font-style: normal; color: var(--accent); }
+  .duel { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 14px; align-items: stretch; }
+  .duel .side { padding: 18px 20px; display: grid; gap: 6px; border-top: 3px solid var(--mc); }
+  .duel .role { font-size: 13px; color: var(--ink-2); }
+  .duel .nm { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 17px; }
+  .duel .big { font: 700 40px/1 var(--sans); letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin-top: 6px; }
+  .duel .meta { font-size: 13px; color: var(--ink-3); }
+  .duel .gap { display: grid; align-content: center; justify-items: center; text-align: center; gap: 4px; padding-inline: 6px; }
+  .duel .gap b { font: 700 34px/1 var(--sans); letter-spacing: -.03em; color: var(--accent); }
+  .duel .gap span { font-size: 12.5px; color: var(--ink-2); max-width: 14ch; }
+  @media (max-width: 700px) {
+    .duel { grid-template-columns: minmax(0, 1fr); }
+    .duel .gap { grid-auto-flow: column; justify-content: start; align-items: baseline; gap: 10px; padding: 0 4px; }
+    .duel .gap span { max-width: none; }
+  }
+  .verdict { font-size: 14.5px; color: var(--ink-2); }
+  .verdict:empty { display: none; }
+  .strip-h { font-size: 15px; margin-top: 10px; }
+  .mstrip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 900px) { .mstrip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .mstrip { grid-template-columns: minmax(0, 1fr); } }
+  .mcard { padding: 16px 18px; display: grid; gap: 14px; align-content: start; border-top: 2px solid var(--mc); }
   .mcard .hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .mcard .nm { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
   .mcard .px { font: 500 11.5px/1 var(--mono); color: var(--ink-3); }
   .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .kpi { display: grid; gap: 3px; }
+  .kpi { display: grid; gap: 3px; align-content: start; }
   .kpi b { font: 600 20px/1.1 var(--sans); letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .kpi span { font-size: 12px; color: var(--ink-3); }
-  .kpi .best { font: 600 9.5px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--pass); }
+  .kpi .best { margin-top: 2px; font: 700 11px/1 var(--sans); letter-spacing: .04em; text-transform: uppercase; color: var(--pass); }
 
   .trips { display: grid; gap: 16px; }
   .trip-tabs { margin-bottom: 12px; }
@@ -106,7 +132,9 @@
   .fact.key { color: var(--ink); }
   .agree { font-size: 13.5px; padding: 10px 12px; border-radius: 10px; background: var(--pass-bg); color: var(--ink); }
   .agree.diff { background: var(--hold-bg); }
-  .picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+  .picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 900px) { .picks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .picks { grid-template-columns: minmax(0, 1fr); } }
   .pick { border: 1px solid var(--line); border-top: 2px solid var(--mc); border-radius: 12px; padding: 14px; display: grid; gap: 10px; background: var(--surface-2); text-align: left; cursor: pointer; align-content: start; }
   .pick:hover { border-color: var(--line-2); border-top-color: var(--mc); background: var(--surface-3); }
   .pick .who { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
@@ -141,11 +169,16 @@
   .delta { font: 600 13px/1.3 var(--sans); color: var(--pass); }
 
   .grid-wrap { overflow-x: auto; }
+  .swipe-hint { display: none; }
+  .st tbody td:first-child, .st thead th:first-child, .st tfoot td:first-child { position: sticky; left: 0; z-index: 3; background: var(--surface); }
+  .st tr.group td:first-child { position: static; background: none; }
+  .st tr.group .gl { position: sticky; left: 14px; }
+  .st tfoot td:first-child { background: var(--surface-2); }
   table.st { width: 100%; border-collapse: separate; border-spacing: 0; }
   .st th, .st td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
   .st thead th { font: 500 12px/1.2 var(--sans); color: var(--ink-2); white-space: nowrap; }
   .st thead th.m, .st td.m { text-align: center; }
-  .st tr.group td { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); padding-top: 20px; padding-bottom: 8px; }
+  .st tr.group td { font: 600 12.5px/1.2 var(--sans); color: var(--ink-3); padding-top: 20px; padding-bottom: 8px; }
   .st .nm { font-weight: 500; }
   .st .ds { font-size: 12.5px; color: var(--ink-3); max-width: 52ch; }
   .cell { display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; background: none; cursor: pointer; padding: 5px 8px; border-radius: 8px; font: 500 12px/1 var(--sans); }
@@ -158,7 +191,7 @@
 
   .findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
   .finding { padding: 18px; display: grid; gap: 8px; align-content: start; }
-  .finding .k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+  .finding .k { font: 600 12.5px/1.3 var(--sans); }
   .finding.info .k { color: var(--accent); } .finding.warn .k { color: var(--hold); } .finding.bad .k { color: var(--fail); }
   .finding p, .finding li { font-size: 13.5px; color: var(--ink-2); }
   .finding ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
@@ -177,11 +210,11 @@
   .bside { display: grid; gap: 8px; align-content: start; }
   .bside ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13.5px; color: var(--ink-2); }
   .bside.dim ul { color: var(--ink-3); }
-  .bside .k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+  .bside .k { font: 600 12.5px/1.3 var(--sans); }
   .bside .k.ok { color: var(--pass); } .bside .k.no { color: var(--ink-3); }
   .bline { position: relative; width: 1px; background: repeating-linear-gradient(var(--line-2) 0 6px, transparent 6px 12px); }
   .bline span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(90deg);
-    font: 500 10px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);
+    font: 600 11.5px/1 var(--sans); color: var(--ink-3);
     background: var(--surface); padding: 6px 4px; white-space: nowrap; }
   .bfoot { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 12px; margin-top: 2px; }
   @media (max-width: 760px) {
@@ -192,7 +225,7 @@
   .ask { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .askcard { padding: 18px; display: grid; gap: 10px; align-content: start; }
   .askcard.wide { grid-column: 1 / -1; }
-  .askcard .k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .askcard .k { font: 600 12.5px/1.3 var(--sans); color: var(--accent); }
   .askcard p { font-size: 13.5px; color: var(--ink-2); }
   .tryout { margin: 0; padding-left: 20px; display: grid; gap: 8px; font-size: 13.5px; color: var(--ink-2); }
   .tryout b { color: var(--ink); }
@@ -208,8 +241,8 @@
   .turntbl .new { color: var(--ink); }
   @media (max-width: 760px) { .ask { grid-template-columns: minmax(0, 1fr); } }
   .trace-card { padding: 18px; display: grid; gap: 10px; }
-  .trace-card > p { font-size: 13.5px; color: var(--ink-2); max-width: 90ch; }
-  .trace-card .k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .trace-card > p { font-size: 13.5px; color: var(--ink-2); }
+  .trace-card .k { font: 600 12.5px/1.3 var(--sans); color: var(--accent); }
   .anno-code { line-height: 2; overflow-x: auto; }
   .anno-code .ln { display: block; white-space: pre; }
   .anno-code .s { color: var(--pass); }
@@ -218,7 +251,7 @@
   .mk { margin: 0 6px; vertical-align: 2px; }
   .anno { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
   .anno li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start;
-    font-size: 13.5px; color: var(--ink-2); max-width: 100ch; }
+    font-size: 13.5px; color: var(--ink-2); }
   .anno .num { margin-top: 2px; }
   .anno b { color: var(--ink); }
   .anno code { font: 500 12.5px var(--mono); color: var(--ink); }
@@ -227,7 +260,7 @@
     font: 400 12.5px/1.7 var(--mono); white-space: pre; overflow-x: auto; }
   .flow4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
   .fstep { padding: 14px; border-radius: 12px; background: var(--surface-2); display: grid; gap: 6px; align-content: start; }
-  .fstep .n { font: 500 11px/1 var(--mono); color: var(--ink-3); }
+  .fstep .n { font: 600 12px/1 var(--sans); color: var(--ink-3); }
   .fstep h4 { font-size: 13.5px; }
   .fstep p { font-size: 12.5px; color: var(--ink-2); }
   .fstep code { font: 500 11.5px var(--mono); color: var(--ink); }
@@ -236,7 +269,6 @@
   .pstep { position: relative; }
   .pstep::after { content: ""; position: absolute; right: -8px; top: 50%; width: 8px; height: 1px; background: var(--line-2, var(--line)); }
   .pstep:last-child::after { display: none; }
-  .pstep .ico { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-3); font-size: 14px; }
   .pstep .tags { margin-top: auto; }
   .flowcap { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 12px 2px 0; }
   .flowcap span { font-size: 12px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
@@ -247,33 +279,32 @@
   .wf .tick { fill: var(--ink-3); font-family: var(--mono); font-size: 10.5px; }
   .wf .grid { stroke: var(--line); stroke-width: 1; }
   .pstep { padding: 12px; border-radius: 10px; background: var(--surface-2); display: grid; gap: 6px; align-content: start; }
-  .pstep .n { font: 500 11px/1 var(--mono); color: var(--ink-3); }
+  .pstep .n { font: 600 12px/1 var(--sans); color: var(--ink-3); }
   .pstep h4 { font-size: 13.5px; }
   .pstep p { font-size: 12.5px; color: var(--ink-2); }
   .tags { display: flex; flex-wrap: wrap; gap: 4px; }
-  .tag { font: 500 10.5px/1 var(--mono); padding: 4px 6px; border-radius: 5px; background: var(--surface-3); color: var(--ink-2); }
+  .tag { font: 500 11.5px/1 var(--sans); padding: 4px 6px; border-radius: 5px; background: var(--surface-3); color: var(--ink-2); }
   @media (max-width: 880px) { .pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
-  footer { font-size: 12.5px; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 18px; }
-  footer code { font-family: var(--mono); }
 
   dialog#detail { border: 1px solid var(--line-2); padding: 0; width: min(1160px, calc(100vw - 24px)); height: calc(100vh - 24px); max-height: calc(100vh - 24px);
     border-radius: 16px; background: var(--bg); color: var(--ink); box-shadow: 0 30px 80px rgba(0, 0, 0, .45); }
   dialog#detail::backdrop { background: var(--backdrop); backdrop-filter: blur(3px); }
-  .dlg { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; }
+  .dlg { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr); height: 100%; }
   .dlg-head { display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--surface); }
   .dlg-head .ttl { display: grid; gap: 3px; min-width: 0; }
   .dlg-head h2 { font-size: 20px; }
   .dlg-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .seg-ctl { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); }
+  .seg-ctl { display: inline-flex; max-width: 100%; overflow-x: auto; scrollbar-width: none; padding: 3px; gap: 2px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); }
+  .seg-ctl button { flex: none; white-space: nowrap; }
   .seg-ctl button { border: 0; background: none; padding: 5px 10px; border-radius: 7px; cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
   .seg-ctl button[aria-pressed="true"] { background: var(--surface-3); color: var(--ink); }
-  .dlg-body { overflow-y: auto; padding: 18px; display: grid; gap: 14px; align-content: start; }
+  .dlg-body { overflow-y: auto; padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-content: start; }
   .dlg-body > * { min-width: 0; }
   .stages { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.15fr) minmax(0, 1fr); }
   .stage { padding: 14px; display: grid; gap: 10px; align-content: start; min-width: 0; }
   .stage + .stage { border-left: 1px solid var(--line); }
-  .stage-k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+  .stage-k { font: 600 12.5px/1.2 var(--sans); color: var(--ink-3); }
   @media (max-width: 1000px) {
     .stages { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .stage + .stage { border-left: 0; } .stage { border-top: 1px solid var(--line); } .stage:first-child, .stage:nth-child(2) { border-top: 0; }
@@ -304,7 +335,7 @@
   .evalgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
   .evalgrid button { display: flex; justify-content: space-between; gap: 6px; border: 0; border-radius: 7px; padding: 6px 8px; font: 500 12px/1.2 var(--sans); cursor: pointer; text-align: left; }
   .evalgrid .pass { background: var(--pass-bg); color: var(--pass); } .evalgrid .fail { background: var(--fail-bg); color: var(--fail); } .evalgrid .na { background: var(--surface-2); color: var(--ink-3); }
-  .panel2 { padding: 14px 16px; display: grid; gap: 12px; min-width: 0; }
+  .panel2 { padding: 14px 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
   .panel2 .hd { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; align-items: baseline; }
   .diagram { display: flex; align-items: center; overflow-x: auto; padding-bottom: 6px; }
   .dcol { display: grid; gap: 8px; align-content: center; flex: 0 0 auto; }
@@ -315,7 +346,7 @@
   .node.start, .node.end { width: 140px; } .node.err { border-color: var(--fail); }
   .node .t { font: 600 12.5px/1.25 var(--sans); } .node .m { font: 500 11.5px/1.35 var(--mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }
   .node .r { font-size: 11.5px; color: var(--ink-3); line-height: 1.35; }
-  .badge { font: 600 10px/1 var(--mono); letter-spacing: .03em; text-transform: uppercase; padding: 3px 6px; border-radius: 999px; background: var(--hold-bg); color: var(--hold); justify-self: start; }
+  .badge { font: 600 11px/1 var(--sans); padding: 3px 6px; border-radius: 999px; background: var(--hold-bg); color: var(--hold); justify-self: start; }
   .fan { font: 500 11px/1 var(--mono); color: var(--ink-3); text-align: center; }
   .tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid var(--line); }
   .tabs button { border: 0; background: none; padding: 9px 12px; cursor: pointer; color: var(--ink-3); border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 500; font-size: 13.5px; }
@@ -371,6 +402,19 @@
   .scroll-reveal { opacity: 0; transform: translateY(1rem); transition: opacity 520ms ease, transform 520ms ease;
     transition-delay: var(--reveal-delay, 0ms); }
   .scroll-reveal.is-visible { opacity: 1; transform: translateY(0); }
+  @media (max-width: 760px) {
+    nav.top .in { flex-wrap: nowrap; }
+    .brand .back { display: none; }
+    .navlinks { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; min-width: 0;
+      mask-image: linear-gradient(90deg, #000 85%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); }
+    .navlinks a { white-space: nowrap; }
+    .swipe-hint { display: block; margin: 0 0 8px; }
+    .st th, .st td { padding: 9px 10px; }
+    .st .nm { font-size: 13.5px; } .st .ds { display: none; }
+    .st tbody td:first-child, .st thead th:first-child, .st tfoot td:first-child { min-width: 118px; max-width: 132px; box-shadow: 1px 0 0 var(--line); }
+    dialog#detail { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+    .dlg-head, .dlg-body { padding-inline: 14px; }
+  }
   @media (prefers-reduced-motion: reduce) {
     .scroll-reveal, .scroll-reveal.is-visible { opacity: 1; transform: none; transition: none; }
     .card, .pick, .cell, .btn, .link { transition: none; }
@@ -379,28 +423,32 @@
 </style>
 
 <nav class="top"><div class="in">
-  <span class="brand"><span class="logo" aria-hidden="true">✈</span>Trip Agent Evals</span>
+  <span class="brand"><a class="brand-name" href="https://hannahbroom.com/">Hannah Broom</a><a class="back" href="https://hannahbroom.com/Evaluating%20agents.html">← Case study</a></span>
   <span class="navlinks"><a href="#langfuse">Langfuse</a><a href="#steps">The agent</a><a href="#tested">What we tested</a><a href="#perf">Time &amp; tokens</a><a href="#design">What changed</a><a href="#next">What is next</a></span>
 </div></nav>
 
 <div class="wrap">
   <header class="hero">
-    <span class="label">Agent evaluation · flight search</span>
     <h1>Evaluating a flight&#8209;search agent</h1>
     <p class="lede">I built this to learn how to tell whether an AI agent is actually doing its job, not just producing answers that sound right,
       using flight planning for two real trips as the test case.</p>
+    <div class="result">
+      <h2 class="headline" id="headline"></h2>
+      <div class="duel" id="duel"></div>
+      <p class="verdict" id="verdict"></p>
+      <h3 class="strip-h">Every model, side by side</h3>
+      <div class="mstrip" id="mstrip"></div>
+    </div>
     <ul class="about">
       <li><b>The agent</b> searches live Google Flights data for a bachelorette weekend in Mexico City and a honeymoon in Asia, checks each option against the budget, dates and stop rules, and makes a simulated booking.</li>
       <li><b>The eval</b> scores every step, not just the final answer, with code-graded checks for accuracy, grounding and safety, because a confident reply can still hide an invented price or a rule-breaking booking.</li>
-      <li><b>The traces</b> in Langfuse record each run step by step, which is how the problems in the findings were found.</li>
+      <li><b>The traces</b> in Langfuse record each run step by step, which is how I tracked down each failure in <a href="#tested">What we tested on</a>.</li>
       <li><b>The comparison</b> runs the same scenarios on <span id="about-models">several Claude models</span> to see what each one trades between quality, speed and cost.</li>
     </ul>
-    <p class="verdict" id="verdict"></p>
-    <div class="mstrip" id="mstrip"></div>
   </header>
 
   <section id="langfuse" aria-labelledby="lf-h">
-    <div class="sec-head"><div><span class="label">The tool</span><h2 id="lf-h">How Langfuse works</h2>
+    <div class="sec-head"><div><h2 id="lf-h">How Langfuse works</h2>
       <p class="muted small">Langfuse is an observability tool: it collects what each run did and turns it into latency, token
         usage, cost and scores you can compare. It never watches the agent, the agent reports to it, so a step nobody wrote a
         line for is a step nobody can see.</p></div></div>
@@ -459,7 +507,7 @@
   </section>
 
   <section id="steps" aria-labelledby="steps-h">
-    <div class="sec-head"><div><span class="label">One run, end to end</span><h2 id="steps-h">What the agent actually does</h2>
+    <div class="sec-head"><div><h2 id="steps-h">What the agent actually does</h2>
       <p class="muted small">Six stages, each watched by a different check. That is what makes a wrong step visible even when the final answer reads well.</p></div></div>
     <div class="pipeline" id="pipeline"></div>
     <div class="card panel2" id="worked"></div>
@@ -467,18 +515,19 @@
 
 
   <section id="tested" aria-labelledby="tested-h">
-    <div class="sec-head"><div><span class="label">The dataset</span><h2 id="tested-h">What we tested on</h2>
+    <div class="sec-head"><div><h2 id="tested-h">What we tested on</h2>
       <p class="muted small">Two real trips on live Google Flights data, plus stress tests on synthetic fares and injected API failures.
         Every model saw identical data, so differences are the model, not the fares.</p></div></div>
     <div class="seg-ctl trip-tabs" id="trip-tabs" role="tablist" aria-label="Choose a trip"></div>
     <div class="trips" id="trip-cards"></div>
-    <div class="sec-head sub-head"><div><span class="label">All 15 scenarios · every model</span>
+    <div class="sec-head sub-head"><div><h3>All 15 scenarios, every model</h3>
       <p class="muted small">The two trips above plus thirteen stress tests.</p></div></div>
+    <p class="muted small swipe-hint">Swipe the table sideways to see all models. Tap a result for the full run.</p>
     <div class="card grid-wrap"><table class="st" id="stress-grid"></table></div>
   </section>
 
   <section id="perf" aria-labelledby="perf-h">
-    <div class="sec-head"><div><span class="label">Performance</span><h2 id="perf-h">Where the time and tokens go</h2>
+    <div class="sec-head"><div><h2 id="perf-h">Where the time and tokens go</h2>
       <p class="muted small">Averages across every scenario. Hover a bar for exact numbers.</p></div></div>
     <div class="charts3" id="perf-charts"></div>
     <div class="insights" id="perf-insights"></div>
@@ -486,22 +535,22 @@
   </section>
 
   <section id="design" aria-labelledby="des-h">
-    <div class="sec-head"><div><span class="label">Eval → design change</span><h2 id="des-h">What the eval changed</h2>
+    <div class="sec-head"><div><h2 id="des-h">What the eval changed</h2>
       <p class="muted small">The traces showed a fix worth making, and the same runs measured whether it worked. That loop is the reason to build the eval.</p></div></div>
     <div class="card ba" id="beforeafter" hidden></div>
   </section>
 
   <section id="next" aria-labelledby="next-h">
-    <div class="sec-head"><div><span class="label">What the numbers made me ask</span><h2 id="next-h">Where would the next saving come from?</h2>
+    <div class="sec-head"><div><h2 id="next-h">Where would the next saving come from?</h2>
       <p class="muted small">Same loop as the change above, one step earlier: the traces raised a question I hadn't thought to
         ask, and the same eval can settle which answer is worth shipping. Proposed, not built.</p></div></div>
     <div class="ask">
       <div class="card askcard">
-        <span class="k">1 · What the data showed</span>
+        <span class="k">What the data showed</span>
         <div id="ask-stats"></div>
       </div>
       <div class="card askcard">
-        <span class="k">2 · The question it raised</span>
+        <span class="k">The question it raised</span>
         <h3>Why is the input so big, and which part of it is avoidable?</h3>
         <p>The API keeps no memory between turns, so each turn re-sends the whole conversation: the system prompt, the tool
           definitions, and every search result collected so far. The reply the user reads is the small part.</p>
@@ -509,7 +558,7 @@
           counts were recorded.</p>
       </div>
       <div class="card askcard wide">
-        <span class="k">3 · What I'd try, in order of expected payoff</span>
+        <span class="k">What I'd try, in order of expected payoff</span>
         <ol class="tryout">
           <li><b>Prompt caching.</b> Mark the stable prefix so repeat reads bill at a fraction of the normal input price.
             It targets the re-sent share directly, which is the largest block.</li>
@@ -531,7 +580,9 @@
     </div>
   </section>
 
-  <footer>Simulated bookings only. No flight is ever purchased.</footer>
+  <footer class="byline">Built by <a href="https://hannahbroom.com/">Hannah Broom</a> ·
+    <a href="https://hannahbroom.com/Evaluating%20agents.html">Read the case study</a> ·
+    <a href="https://github.com/hmbroom1/flight-search-eval-agent">Code on GitHub</a></footer>
 </div>
 
 <dialog id="detail" aria-labelledby="d-title">
@@ -587,7 +638,7 @@ const tint = (i, pct) => `color-mix(in srgb, var(--m${i % 6}) ${pct}%, transpare
 let openM = 0, openI = 0, tab = "flights", filter = "all", allFlights = false;
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const title = id => id.replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
+const title = id => id.replace(/_/g, " ").replace(/\bapi\b/gi, "API").replace(/^./, c => c.toUpperCase());
 const money = n => n == null ? "no price" : "$" + Number(n).toLocaleString("en-US");
 const hhmm = t => (t || "").split(" ")[1] || "";
 const day = t => (t || "").split(" ")[0] || "";
@@ -637,7 +688,7 @@ const stopsText = n => n === 0 ? "nonstop" : `${n} stop${n > 1 ? "s" : ""}`;
 /* ---------- hero ---------- */
 function renderHero() {
   const best = { clean: Math.max(...ST.map(s => s.clean)), avgMs: Math.min(...ST.map(s => s.avgMs)), avgCost: Math.min(...ST.map(s => s.avgCost)) };
-  const kpi = (v, label, isBest) => `<div class="kpi"><b>${v}</b><span>${label}${isBest ? ' · <span class="best">best</span>' : ""}</span></div>`;
+  const kpi = (v, label, isBest) => `<div class="kpi"><b>${v}</b><span>${label}</span>${isBest ? '<span class="best">best</span>' : ""}</div>`;
   document.getElementById("mstrip").innerHTML = M.map((m, i) => { const s = ST[i];
     return `<div class="card mcard" style="--mc:${mcol(i)}"><div class="hd"><span class="nm"><span class="mdot" style="background:${mcol(i)}"></span>${esc(m.label)}</span><span class="px">$${m.price_in} / $${m.price_out} per M</span></div>
       <div class="kpis">${kpi(`${s.clean}/${s.n}`, "pass all checks", s.clean === best.clean)}${kpi(fmtS(s.avgMs), "avg run", s.avgMs === best.avgMs)}${kpi(usd(s.avgCost), "avg cost", s.avgCost === best.avgCost)}</div></div>`; }).join("");
@@ -648,20 +699,34 @@ function renderHero() {
   const ranked = ST.map((s, i) => [s, i]).sort((a, b) => b[0].clean - a[0].clean || a[0].avgCost - b[0].avgCost);
   const winners = ranked.filter(([s]) => s.clean === ranked[0][0].clean).sort((a, b) => a[0].avgCost - b[0].avgCost);
   const [ts, ti] = winners[0];
-  let v;
+  const word = n => ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"][n] ?? String(n);
+  const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+  let h = "", duel = "", v = "";
   if (winners.length > 1) {
-    const dear = winners[winners.length - 1];
-    v = `<b>${winners.length} of ${M.length} models</b> passed all ${ts.n} scenarios — ${esc(list(winners.map(([, i]) => M[i].label)))}. `
-      + `Among them the cost per run ranges from <b>${usd(ts.avgCost)}</b> (${esc(M[ti].label)}) to <b>${usd(dear[0].avgCost)}</b> (${esc(M[dear[1]].label)}), `
-      + `so the priciest model buys nothing here: <b>${(dear[0].avgCost / Math.max(ts.avgCost, 1e-9)).toFixed(1)}× the cost for the same score</b>`;
+    const dear = winners[winners.length - 1], ratio = (dear[0].avgCost / Math.max(ts.avgCost, 1e-9)).toFixed(1);
+    const perfect = ts.clean === ts.n;
+    h = `${cap(word(winners.length))} of ${word(M.length)} models ${perfect ? `passed all ${ts.n} scenarios` : `tied at ${ts.clean} of ${ts.n}`}. `
+      + `The priciest cost <em>${ratio}× more</em> for the same score.`;
+    const side = ([st, i], role) => `<div class="card side" style="--mc:${mcol(i)}"><span class="role">${role}</span>
+      <span class="nm"><span class="mdot" style="background:${mcol(i)}"></span>${esc(M[i].label)}</span>
+      <b class="big">${usd(st.avgCost)}</b><span class="meta">per run · ${st.clean}/${st.n} passed · ${fmtS(st.avgMs)} avg</span></div>`;
+    duel = side(winners[0], `Cheapest ${perfect ? "perfect" : "top"} score`)
+      + `<div class="gap"><b>${ratio}×</b><span>the cost for the same score</span></div>`
+      + side(dear, `Priciest ${perfect ? "perfect" : "top"} score`);
+    const middle = winners.slice(1, -1).map(([, i]) => M[i].label);
+    if (middle.length) v = `${esc(list(middle))} also ${middle.length > 1 ? "score" : "scores"} ${ts.clean}/${ts.n}, in between on cost`;
   } else {
     const opus = M.findIndex(m => m.id === "claude-opus-5");
-    v = `<b>${esc(M[ti].label)}</b> passed ${ts.clean} of ${ts.n} scenarios`;
-    if (opus >= 0 && opus !== ti) v += ` at ${Math.round(100 * ts.avgCost / ST[opus].avgCost)}% of ${esc(M[opus].label)}'s cost`;
+    h = `${esc(M[ti].label)} passed ${ts.clean} of ${ts.n} scenarios`;
+    if (opus >= 0 && opus !== ti) h += ` at ${Math.round(100 * ts.avgCost / ST[opus].avgCost)}% of ${esc(M[opus].label)}'s cost`;
+    h += ".";
   }
   const cheap = ST.map((s, i) => [s, i]).sort((a, b) => a[0].avgCost - b[0].avgCost)[0];
-  if (!winners.some(([, i]) => i === cheap[1])) v += `. <b>${esc(M[cheap[1]].label)}</b> is cheaper still but passed ${cheap[0].clean} of ${cheap[0].n}`;
-  document.getElementById("verdict").innerHTML = M.length > 1 ? v + "." : "";
+  if (!winners.some(([, i]) => i === cheap[1])) v += `${v ? ". " : ""}<b>${esc(M[cheap[1]].label)}</b> is cheaper still but passed ${cheap[0].clean} of ${cheap[0].n}`;
+  if (M.length < 2) h = "";
+  document.getElementById("headline").innerHTML = h;
+  document.getElementById("duel").innerHTML = duel;
+  document.getElementById("verdict").innerHTML = M.length > 1 && v ? v + "." : "";
 }
 
 /* ---------- real trips ---------- */
@@ -716,7 +781,7 @@ function renderPerformance() {
   const chart = (h, sub, rows, legend) => `<div class="card chart"><h3>${h}</h3><span class="sub">${sub}</span>${legend || ""}<div class="bars">${rows}</div></div>`;
   const maxT = Math.max(...ST.map(s => s.avgLlm + s.avgTool)), maxTok = Math.max(...ST.map(s => s.avgIn + s.avgOut)), maxC = Math.max(...ST.map(s => s.avgCost));
   const row = (i, segs, total, max, val) => `<div class="bar"><span class="lbl"><span class="mdot" style="background:${mcol(i)}"></span>${esc(M[i].label)}</span>
-    <div class="track" style="width:${Math.max(3, 100 * total / max)}%">${segs.filter(g => g.v > 0).map(g => `<span class="seg" style="flex:${g.v};background:${g.bg}" data-tip="${esc(g.tip)}"></span>`).join("")}</div><span class="val">${val}</span></div>`;
+    <div class="track" style="width:${Math.max(3, 100 * total / max)}%">${segs.filter(g => g.v > 0).map(g => `<span class="seg" style="flex:${g.v / total};background:${g.bg}" data-tip="${esc(g.tip)}"></span>`).join("")}</div><span class="val">${val}</span></div>`;
   const split = (a, b) => `<div class="legend"><span><i style="background:var(--ink-2)"></i>${a}</span><span><i style="background:color-mix(in srgb, var(--ink-2) 35%, transparent)"></i>${b}</span></div>`;
   document.getElementById("perf-charts").innerHTML =
     chart("Run time", "Average per scenario", ST.map((s, i) => row(i, [
@@ -729,14 +794,17 @@ function renderPerformance() {
   const llm = allT.reduce((a, t) => a + t.llmMs, 0), tool = allT.reduce((a, t) => a + t.toolMs, 0);
   const tin = allT.reduce((a, t) => a + t.tin, 0), tall = allT.reduce((a, t) => a + t.tin + t.tout, 0);
   const slowTool = allSc.flatMap(s => s.steps.filter(x => x.kind === "tool").map(st => st.ms)).reduce((a, x) => Math.max(a, x), 0);
-  const opus = M.findIndex(m => m.id === "claude-opus-5"), cheap = ST.map((s, i) => [s.avgCost, i]).sort((a, b) => a[0] - b[0])[0];
+  const topScore = Math.max(...ST.map(s => s.clean));
+  const tied = ST.map((s, i) => [s.avgCost, i]).filter(([, i]) => ST[i].clean === topScore).sort((a, b) => a[0] - b[0]);
+  const [cheapTop, priceyTop] = [tied[0], tied[tied.length - 1]];
   const tokSpread = Math.max(...ST.map(s => s.avgIn + s.avgOut)) / Math.max(1, Math.min(...ST.map(s => s.avgIn + s.avgOut)));
   const cards = [
     [`${Math.round(100 * llm / Math.max(1, llm + tool))}%`, "of run time is the model", `Eligibility checks and bookings take milliseconds; only live flight searches take seconds (slowest ${fmtS(slowTool)}).`],
     [`${Math.round(100 * tin / Math.max(1, tall))}%`, "of tokens are input", "Every turn re-sends the whole conversation, search results included. Prompt caching would cut most of that cost."],
   ];
-  if (opus >= 0 && cheap[1] !== opus) cards.push([`${(ST[opus].avgCost / cheap[0]).toFixed(1)}×`, `cost gap, ${M[opus].label} vs ${M[cheap[1]].label}`,
-    `Token counts differ by only ${Math.round(100 * (tokSpread - 1))}% across models, so price per token drives almost all of the cost difference.`]);
+  if (tied.length > 1) { const perfect = topScore === ST[cheapTop[1]].n;
+    cards.push([`${(priceyTop[0] / cheapTop[0]).toFixed(1)}×`, `cost gap for the same ${perfect ? "perfect " : ""}score`,
+    `${M[priceyTop[1]].label} and ${M[cheapTop[1]].label} both ${perfect ? `passed all ${ST[cheapTop[1]].n} scenarios` : `passed ${topScore} of ${ST[cheapTop[1]].n}`}. Token counts differ by only ${Math.round(100 * (tokSpread - 1))}% across models, so price per token drives almost all of the cost difference.`]); }
   document.getElementById("perf-insights").innerHTML = cards.map(([b, h, p]) => `<div class="card insight"><b>${b}</b><h3>${h}</h3><p>${p}</p></div>`).join("");
   renderPerfDetail();
 }
@@ -782,11 +850,11 @@ function renderPerfDetail() {
 function renderStress() {
   const desc = id => (M.map((m, i) => find(i, id)).find(Boolean) || {}).description || "";
   const cell = (i, id) => { const s = find(i, id); if (!s) return `<td class="m faint">–</td>`; const f = failed(s);
-    return `<td class="m"><button type="button" class="cell ${f.length ? "fail" : ""}" data-open="${i}:${esc(id)}" data-tip="${esc(f.length ? f.map(k => CHECK_NAMES[k] + ": " + (s.scores[k].details[0] || "")).join("\n") : "All checks pass · " + fmtS(totals(s).wall) + " · " + usd(s.cost))}">
+    return `<td class="m"><button type="button" class="cell ${f.length ? "fail" : ""}" data-open="${i}:${esc(id)}" aria-label="${esc(`${M[i].label}, ${title(id)}: ${f.length ? "failed " + f.map(k => CHECK_NAMES[k]).join(", ") : "passed all checks"}. Open run details`)}" data-tip="${esc(f.length ? f.map(k => CHECK_NAMES[k] + ": " + (s.scores[k].details[0] || "")).join("\n") : "All checks pass · " + fmtS(totals(s).wall) + " · " + usd(s.cost))}">
       <span class="ic">${f.length ? "✕" : "✓"}</span>${f.length ? `<span class="why">${esc(f.map(k => CHECK_NAMES[k]).join(", "))}</span>` : ""}</button></td>`; };
   const ids = GROUPS.flatMap(g => g[1]);
   document.getElementById("stress-grid").innerHTML = `<thead><tr><th>Scenario</th>${M.map((m, i) => `<th class="m"><span class="mdot" style="background:${mcol(i)}"></span>&nbsp; ${esc(m.label)}</th>`).join("")}</tr></thead>
-    <tbody>${GROUPS.map(([g, list]) => `<tr class="group"><td colspan="${M.length + 1}">${esc(g)}</td></tr>` + list.filter(id => M.some((m, i) => find(i, id)))
+    <tbody>${GROUPS.map(([g, list]) => `<tr class="group"><td colspan="${M.length + 1}"><span class="gl">${esc(g)}</span></td></tr>` + list.filter(id => M.some((m, i) => find(i, id)))
       .map(id => `<tr><td><div class="nm">${esc(title(id))}</div><div class="ds">${esc(desc(id))}</div></td>${M.map((m, i) => cell(i, id)).join("")}</tr>`).join("")).join("")}</tbody>
     <tfoot><tr><td>Passed every check</td>${M.map((m, i) => { const sc = ids.map(id => find(i, id)).filter(Boolean); return `<td class="m">${sc.filter(passesAll).length} / ${sc.length}</td>`; }).join("")}</tr></tfoot>`;
   document.querySelectorAll("#stress-grid [data-open]").forEach(b => b.addEventListener("click", () => { const [m, id] = b.dataset.open.split(":"); openDetail(+m, id); }));
@@ -882,8 +950,7 @@ function renderPipeline() {
     ["Book", "Simulated, and only a flight that passed.", ["safety"]],
     ["Answer", "Every fact traces to the search data.", ["grounding", "outcome"]],
   ];
-  const icons = ["📝", "🔎", "⚖️", "↕️", "🎫", "💬"];
-  document.getElementById("pipeline").innerHTML = steps.map(([h, p, t], i) => `<div class="pstep"><span class="ico" aria-hidden="true">${icons[i]}</span><span class="n">0${i + 1}</span><h4>${h}</h4><p>${p}</p><div class="tags">${t.map(k => `<span class="tag" title="${esc(CHECK_HELP[k])}">${CHECK_NAMES[k]}</span>`).join("")}</div></div>`).join("");
+  document.getElementById("pipeline").innerHTML = steps.map(([h, p, t], i) => `<div class="pstep"><span class="n">Step ${i + 1}</span><h4>${h}</h4><p>${p}</p><div class="tags">${t.map(k => `<span class="tag" title="${esc(CHECK_HELP[k])}">${CHECK_NAMES[k]}</span>`).join("")}</div></div>`).join("");
 }
 
 /* ---------- detail dialog ---------- */
@@ -1113,6 +1180,15 @@ function tipOn(root) {
     tip.style.top = (e.clientY + 14) + "px";
   });
   root.addEventListener("mouseleave", () => { tip.hidden = true; });
+  root.addEventListener("focusin", e => {
+    const t = e.target.closest?.("[data-tip]");
+    if (!t || !t.matches(":focus-visible")) { tip.hidden = true; return; }
+    const r = t.getBoundingClientRect();
+    tip.textContent = t.dataset.tip; tip.hidden = false;
+    tip.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 300)) + "px";
+    tip.style.top = (r.bottom + 8) + "px";
+  });
+  root.addEventListener("focusout", () => { tip.hidden = true; });
 }
 
 const dlg = document.getElementById("detail");
